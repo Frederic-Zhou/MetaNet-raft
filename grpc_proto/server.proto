@@ -1,0 +1,65 @@
+syntax = "proto3";
+package service;
+option go_package = ".;rpc";
+
+service Server {
+  rpc AppendEntries (entriesArguments) returns (entriesResults) {}
+  rpc RequestVote (voteArguments) returns (voteResults){}
+}
+
+// AppendEntry
+//Invoked by leader to replicate log entries (§5.3); also used as heartbeat (§5.2).
+message entriesArguments {
+  //leader’s term
+  uint64 term = 1;
+
+  //so follower can redirect clients
+  string leaderID = 2;
+
+  //index of log entry immediately preceding new ones
+  uint64 prevLogIndex = 3;
+
+  //term of prevLogIndex entry
+  uint64 prevLogTerm = 4;
+
+  //Entries is a partment of Log
+  repeated Entry Entries = 5;
+
+  //leader’s commitIndex
+  uint64 LeaderCommit = 6;
+}
+
+message entriesResults {
+  	//currentTerm, for leader to update itself
+    uint64 term = 1 ; 
+
+	  //true if follower contained entry matching prevLogIndex and prevLogTerm
+	  bool success = 2; 
+}
+
+message voteArguments {
+  	//candidate’s term
+    uint64 term = 1;
+
+    //candidate requesting vote
+    string candidateID = 2; 
+
+    //index of candidate’s last log entry (§5.4)
+    uint64 lastLogIndex = 3;
+
+    //term of candidate’s last log entry (§5.4)
+    uint64 lastLogTerm = 4; 
+}
+
+message voteResults {
+    //currentTerm, for candidate to update itself
+    uint64 term = 1; 
+
+    //true means candidate received vote
+    bool voteGranted = 2; 
+}
+
+message  Entry {
+	uint64 Term = 1; 
+	bytes Data = 2;
+}
