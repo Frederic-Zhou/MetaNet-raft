@@ -1,3 +1,6 @@
+/*
+ *
+ */
 package models
 
 // Server
@@ -9,6 +12,7 @@ type Server struct {
 	//Server ID
 	ID string
 
+	//Server Role, one of [Leader,Candidate,Follower]
 	Role Role
 
 	//latest term server has seen (initialized to 0 on first boot, increases monotonically)
