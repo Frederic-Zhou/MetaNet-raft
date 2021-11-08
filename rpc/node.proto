@@ -2,7 +2,7 @@ syntax = "proto3";
 package service;
 option go_package = ".;rpc";
 
-service Server {
+service Node {
   rpc AppendEntries (entriesArguments) returns (entriesResults) {}
   rpc RequestVote (voteArguments) returns (voteResults){}
 }

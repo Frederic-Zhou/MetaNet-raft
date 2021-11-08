@@ -1,23 +1,20 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"net"
 
-	"metanet/rpc"
+	"metanet/node"
+	"metanet/node_rpc"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
-type server struct{}
-
-func (s *server) SayHello(ctx context.Context, in *rpc.HelloRequest) (*rpc.HelloReply, error) {
-	return &rpc.HelloReply{Message: "hello " + in.Name}, nil
-}
-
 func main() {
+
+	n := node.Node{}
+
 	// 监听本地端口
 	lis, err := net.Listen("tcp", ":8080")
 	if err != nil {
@@ -28,11 +25,12 @@ func main() {
 	// 创建gRPC服务器
 	s := grpc.NewServer()
 	// 注册服务
-	rpc.RegisterGreeterServer(s, &server{})
+	node_rpc.RegisterNodeServer(s, &n)
 	reflection.Register(s)
 	err = s.Serve(lis)
 	if err != nil {
 		fmt.Printf("开启服务失败: %s", err)
 		return
 	}
+
 }
