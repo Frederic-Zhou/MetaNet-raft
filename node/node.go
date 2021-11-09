@@ -1,3 +1,4 @@
+//Node is the base struct of follower, candidata, leader, client
 package node
 
 import (
@@ -5,7 +6,25 @@ import (
 	"metanet/rpc"
 )
 
-// Server change name to Node
+type Config struct {
+	//Node ID
+	ID string
+	//use to display name
+	Name string
+	//Node network address
+	Address    string
+	PrivateKey string
+	PublicKey  string
+}
+
+type Entry struct {
+	Term uint64
+	Data []byte
+}
+
+// for each server, key is server's id,value is the server's index
+type NodeIndex = map[string]uint64
+
 ////////////////////////////////////////////////
 // Persistent state on all servers:
 // Updated on stable storage before responding to RPCs
@@ -47,25 +66,6 @@ type Node struct {
 	NodesConfig []Config
 }
 
-type Config struct {
-	//Node ID
-	ID string
-	//use to display name
-	Name string
-	//Node network address
-	Address    string
-	PrivateKey string
-	PublicKey  string
-}
-
-type Entry struct {
-	Term uint64
-	Data []byte
-}
-
-// for each server, key is server's id,value is the server's index
-type NodeIndex = map[string]uint64
-
 //raft/rpc_server: implemented vote, after Follower change to Candidate then call to Nodes
 func (n *Node) RequestVote(ctx context.Context, in *rpc.VoteArguments) (*rpc.VoteResults, error) {
 	return nil, nil
@@ -80,6 +80,10 @@ func (n *Node) RequestVote(ctx context.Context, in *rpc.VoteArguments) (*rpc.Vot
 //   a. join
 //	 b. rejoin
 //   c. split
-func (n *Node) Join(ctx context.Context, in *rpc.JoinArguments) (*rpc.JoinResults, error) {
+
+//*******************
+//all client or new node request package to ClientRequest,include Join, rejoin, split, datarequest, ....
+//all of this
+func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (*rpc.ClientResults, error) {
 	return nil, nil
 }

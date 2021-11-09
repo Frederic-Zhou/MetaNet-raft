@@ -5,7 +5,7 @@ option go_package = ".;rpc";
 service Node {
   rpc AppendEntries (entriesArguments) returns (entriesResults) {}
   rpc RequestVote (voteArguments) returns (voteResults){}
-  rpc Join (joinArguments) returns (joinResults) {}
+  rpc ClientRequest (clientArguments) returns (clientResults) {}
 }
 
 
@@ -67,19 +67,11 @@ message  Entry {
 }
 
 
-message joinArguments{
-  string method = 1;
-  //node network address, include port
-  string address = 2;
-  //use to display name
-  string name = 3 ;
-  //publickey 
-	bytes publicKey =4;
+message clientArguments{
+	bytes data = 1;
 }
 
-message joinResults{
-  string term = 1;
-  //if not Leader, return false and return leader address
-  bool success = 2;
-  string leaderAddr = 3;
+message clientResults{
+  bool status = 1;
+  bytes data = 2;
 }
