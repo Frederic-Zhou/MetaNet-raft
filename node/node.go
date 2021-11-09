@@ -17,6 +17,9 @@ type Node struct {
 	//candidateId that received vote in current term (or null if none)
 	VotedFor string
 
+	//current term LeaderID
+	LeaderID string
+
 	//Log entries;
 	//each entry contains command for state machine,
 	//and term when entry was received by leader (first index is 1)
@@ -29,14 +32,22 @@ type Node struct {
 	//index of highest log entry applied to state machine (initialized to 0, increases monotonically)
 	LastApplied uint64
 
-	//self extention informations
-	Extention
+	//Volatile state on leaders:
+	//(Reinitialized after election)
+	//for each server, index of the next log entry to send to that server (initialized to leader last log index + 1)
+	NextIndex NodeIndex
 
-	//other known node extentions
-	NodesExtention []Extention
+	//for each server, index of highest log entry known to be replicated on server (initialized to 0, increases monotonically)
+	MatchIndex NodeIndex
+
+	//self Config informations
+	Config
+
+	//other known nodes configs
+	NodesConfig []Config
 }
 
-type Extention struct {
+type Config struct {
 	//Node ID
 	ID string
 	//use to display name
@@ -52,17 +63,15 @@ type Entry struct {
 	Data []byte
 }
 
-//raft: implemented Log and hartbeat transfer, Learder call to Followers
-func (n *Node) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) (*rpc.EntriesResults, error) {
-	return nil, nil
-}
+// for each server, key is server's id,value is the server's index
+type NodeIndex = map[string]uint64
 
-//raft: implemented vote, after Follower change to Candidate then call to Nodes
+//raft/rpc_server: implemented vote, after Follower change to Candidate then call to Nodes
 func (n *Node) RequestVote(ctx context.Context, in *rpc.VoteArguments) (*rpc.VoteResults, error) {
 	return nil, nil
 }
 
-//MetaNet: implemented node Join or Split
+//MetaNet/rpc_server: implemented node Join or Split
 //the node need to input:
 //1. network address,include IP、 bluethooth
 //2. if the node first time Join to metanet, Node must input passphrase, and send publicKey to metanet
@@ -71,4 +80,6 @@ func (n *Node) RequestVote(ctx context.Context, in *rpc.VoteArguments) (*rpc.Vot
 //   a. join
 //	 b. rejoin
 //   c. split
-func (n *Node) Join() {}
+func (n *Node) Join(ctx context.Context, in *rpc.JoinArguments) (*rpc.JoinResults, error) {
+	return nil, nil
+}

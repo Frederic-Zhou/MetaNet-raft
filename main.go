@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net"
+	"time"
 
 	"metanet/node"
-	"metanet/node_rpc"
+	"metanet/rpc"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -25,7 +27,7 @@ func main() {
 	// 创建gRPC服务器
 	s := grpc.NewServer()
 	// 注册服务
-	node_rpc.RegisterNodeServer(s, &n)
+	rpc.RegisterNodeServer(s, &n)
 	reflection.Register(s)
 	err = s.Serve(lis)
 	if err != nil {
@@ -33,4 +35,30 @@ func main() {
 		return
 	}
 
+}
+
+func CreateConn(address string, timeout time.Duration) (nodeClient *rpc.NodeClient, conn *grpc.ClientConn, err error) {
+
+	//建立链接
+	conn, err = grpc.Dial(address, grpc.WithInsecure())
+
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+
+	defer conn.Close()
+
+	nodeclient := rpc.NewNodeClient(conn)
+
+	return &nodeclient, conn, err
+
+	// ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	// defer cancel()
+
+	// appendEntries, err := nodeClient.AppendEntries(ctx, &rpc.EntriesArguments{})
+	// if err != nil {
+	// 	log.Printf("user index could not greet: %v", err)
+	// }
+
+	// fmt.Println(appendEntries)
 }

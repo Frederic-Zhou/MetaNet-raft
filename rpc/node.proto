@@ -8,6 +8,7 @@ service Node {
   rpc Join (joinArguments) returns (joinResults) {}
 }
 
+
 // AppendEntry
 //Invoked by leader to replicate log entries (§5.3); also used as heartbeat (§5.2).
 message entriesArguments {
@@ -67,16 +68,18 @@ message  Entry {
 
 
 message joinArguments{
+  string method = 1;
   //node network address, include port
-  string address = 1;
+  string address = 2;
   //use to display name
-  string name = 2 ;
+  string name = 3 ;
   //publickey 
-	bytes publicKey =3;
+	bytes publicKey =4;
 }
 
 message joinResults{
+  string term = 1;
   //if not Leader, return false and return leader address
-  bool success = 1;
-  string leaderAddr = 2;
+  bool success = 2;
+  string leaderAddr = 3;
 }

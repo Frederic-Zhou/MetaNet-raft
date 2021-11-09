@@ -363,6 +363,128 @@ func (x *Entry) GetData() []byte {
 	return nil
 }
 
+type JoinArguments struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	//node network address, include port
+	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
+	//use to display name
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	//publickey
+	PublicKey []byte `protobuf:"bytes,3,opt,name=publicKey,proto3" json:"publicKey,omitempty"`
+}
+
+func (x *JoinArguments) Reset() {
+	*x = JoinArguments{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_node_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *JoinArguments) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*JoinArguments) ProtoMessage() {}
+
+func (x *JoinArguments) ProtoReflect() protoreflect.Message {
+	mi := &file_node_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use JoinArguments.ProtoReflect.Descriptor instead.
+func (*JoinArguments) Descriptor() ([]byte, []int) {
+	return file_node_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *JoinArguments) GetAddress() string {
+	if x != nil {
+		return x.Address
+	}
+	return ""
+}
+
+func (x *JoinArguments) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *JoinArguments) GetPublicKey() []byte {
+	if x != nil {
+		return x.PublicKey
+	}
+	return nil
+}
+
+type JoinResults struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	//if not Leader, return false and return leader address
+	Success    bool   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	LeaderAddr string `protobuf:"bytes,2,opt,name=leaderAddr,proto3" json:"leaderAddr,omitempty"`
+}
+
+func (x *JoinResults) Reset() {
+	*x = JoinResults{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_node_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *JoinResults) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*JoinResults) ProtoMessage() {}
+
+func (x *JoinResults) ProtoReflect() protoreflect.Message {
+	mi := &file_node_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use JoinResults.ProtoReflect.Descriptor instead.
+func (*JoinResults) Descriptor() ([]byte, []int) {
+	return file_node_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *JoinResults) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *JoinResults) GetLeaderAddr() string {
+	if x != nil {
+		return x.LeaderAddr
+	}
+	return ""
+}
+
 var File_node_proto protoreflect.FileDescriptor
 
 var file_node_proto_rawDesc = []byte{
@@ -401,17 +523,30 @@ var file_node_proto_rawDesc = []byte{
 	0x64, 0x22, 0x2f, 0x0a, 0x05, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x12, 0x0a, 0x04, 0x54, 0x65,
 	0x72, 0x6d, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x04, 0x54, 0x65, 0x72, 0x6d, 0x12, 0x12,
 	0x0a, 0x04, 0x44, 0x61, 0x74, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x04, 0x44, 0x61,
-	0x74, 0x61, 0x32, 0x8c, 0x01, 0x0a, 0x04, 0x4e, 0x6f, 0x64, 0x65, 0x12, 0x45, 0x0a, 0x0d, 0x41,
-	0x70, 0x70, 0x65, 0x6e, 0x64, 0x45, 0x6e, 0x74, 0x72, 0x69, 0x65, 0x73, 0x12, 0x19, 0x2e, 0x73,
-	0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x65, 0x6e, 0x74, 0x72, 0x69, 0x65, 0x73, 0x41, 0x72,
-	0x67, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x1a, 0x17, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63,
-	0x65, 0x2e, 0x65, 0x6e, 0x74, 0x72, 0x69, 0x65, 0x73, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73,
-	0x22, 0x00, 0x12, 0x3d, 0x0a, 0x0b, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x56, 0x6f, 0x74,
-	0x65, 0x12, 0x16, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x76, 0x6f, 0x74, 0x65,
-	0x41, 0x72, 0x67, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x1a, 0x14, 0x2e, 0x73, 0x65, 0x72, 0x76,
-	0x69, 0x63, 0x65, 0x2e, 0x76, 0x6f, 0x74, 0x65, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x22,
-	0x00, 0x42, 0x07, 0x5a, 0x05, 0x2e, 0x3b, 0x72, 0x70, 0x63, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x74, 0x61, 0x22, 0x5b, 0x0a, 0x0d, 0x6a, 0x6f, 0x69, 0x6e, 0x41, 0x72, 0x67, 0x75, 0x6d, 0x65,
+	0x6e, 0x74, 0x73, 0x12, 0x18, 0x0a, 0x07, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x12, 0x12, 0x0a,
+	0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d,
+	0x65, 0x12, 0x1c, 0x0a, 0x09, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x4b, 0x65, 0x79, 0x18, 0x03,
+	0x20, 0x01, 0x28, 0x0c, 0x52, 0x09, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x4b, 0x65, 0x79, 0x22,
+	0x47, 0x0a, 0x0b, 0x6a, 0x6f, 0x69, 0x6e, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x12, 0x18,
+	0x0a, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52,
+	0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x12, 0x1e, 0x0a, 0x0a, 0x6c, 0x65, 0x61, 0x64,
+	0x65, 0x72, 0x41, 0x64, 0x64, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x6c, 0x65,
+	0x61, 0x64, 0x65, 0x72, 0x41, 0x64, 0x64, 0x72, 0x32, 0xc4, 0x01, 0x0a, 0x04, 0x4e, 0x6f, 0x64,
+	0x65, 0x12, 0x45, 0x0a, 0x0d, 0x41, 0x70, 0x70, 0x65, 0x6e, 0x64, 0x45, 0x6e, 0x74, 0x72, 0x69,
+	0x65, 0x73, 0x12, 0x19, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x65, 0x6e, 0x74,
+	0x72, 0x69, 0x65, 0x73, 0x41, 0x72, 0x67, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x1a, 0x17, 0x2e,
+	0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x65, 0x6e, 0x74, 0x72, 0x69, 0x65, 0x73, 0x52,
+	0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x22, 0x00, 0x12, 0x3d, 0x0a, 0x0b, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x56, 0x6f, 0x74, 0x65, 0x12, 0x16, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63,
+	0x65, 0x2e, 0x76, 0x6f, 0x74, 0x65, 0x41, 0x72, 0x67, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x1a,
+	0x14, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x76, 0x6f, 0x74, 0x65, 0x52, 0x65,
+	0x73, 0x75, 0x6c, 0x74, 0x73, 0x22, 0x00, 0x12, 0x36, 0x0a, 0x04, 0x4a, 0x6f, 0x69, 0x6e, 0x12,
+	0x16, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x6a, 0x6f, 0x69, 0x6e, 0x41, 0x72,
+	0x67, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x1a, 0x14, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63,
+	0x65, 0x2e, 0x6a, 0x6f, 0x69, 0x6e, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x22, 0x00, 0x42,
+	0x07, 0x5a, 0x05, 0x2e, 0x3b, 0x72, 0x70, 0x63, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -426,22 +561,26 @@ func file_node_proto_rawDescGZIP() []byte {
 	return file_node_proto_rawDescData
 }
 
-var file_node_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_node_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_node_proto_goTypes = []interface{}{
 	(*EntriesArguments)(nil), // 0: service.entriesArguments
 	(*EntriesResults)(nil),   // 1: service.entriesResults
 	(*VoteArguments)(nil),    // 2: service.voteArguments
 	(*VoteResults)(nil),      // 3: service.voteResults
 	(*Entry)(nil),            // 4: service.Entry
+	(*JoinArguments)(nil),    // 5: service.joinArguments
+	(*JoinResults)(nil),      // 6: service.joinResults
 }
 var file_node_proto_depIdxs = []int32{
 	4, // 0: service.entriesArguments.Entries:type_name -> service.Entry
 	0, // 1: service.Node.AppendEntries:input_type -> service.entriesArguments
 	2, // 2: service.Node.RequestVote:input_type -> service.voteArguments
-	1, // 3: service.Node.AppendEntries:output_type -> service.entriesResults
-	3, // 4: service.Node.RequestVote:output_type -> service.voteResults
-	3, // [3:5] is the sub-list for method output_type
-	1, // [1:3] is the sub-list for method input_type
+	5, // 3: service.Node.Join:input_type -> service.joinArguments
+	1, // 4: service.Node.AppendEntries:output_type -> service.entriesResults
+	3, // 5: service.Node.RequestVote:output_type -> service.voteResults
+	6, // 6: service.Node.Join:output_type -> service.joinResults
+	4, // [4:7] is the sub-list for method output_type
+	1, // [1:4] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
 	1, // [1:1] is the sub-list for extension extendee
 	0, // [0:1] is the sub-list for field type_name
@@ -513,6 +652,30 @@ func file_node_proto_init() {
 				return nil
 			}
 		}
+		file_node_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*JoinArguments); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_node_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*JoinResults); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -520,7 +683,7 @@ func file_node_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_node_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
@@ -548,6 +711,7 @@ const _ = grpc.SupportPackageIsVersion6
 type NodeClient interface {
 	AppendEntries(ctx context.Context, in *EntriesArguments, opts ...grpc.CallOption) (*EntriesResults, error)
 	RequestVote(ctx context.Context, in *VoteArguments, opts ...grpc.CallOption) (*VoteResults, error)
+	Join(ctx context.Context, in *JoinArguments, opts ...grpc.CallOption) (*JoinResults, error)
 }
 
 type nodeClient struct {
@@ -576,10 +740,20 @@ func (c *nodeClient) RequestVote(ctx context.Context, in *VoteArguments, opts ..
 	return out, nil
 }
 
+func (c *nodeClient) Join(ctx context.Context, in *JoinArguments, opts ...grpc.CallOption) (*JoinResults, error) {
+	out := new(JoinResults)
+	err := c.cc.Invoke(ctx, "/service.Node/Join", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // NodeServer is the server API for Node service.
 type NodeServer interface {
 	AppendEntries(context.Context, *EntriesArguments) (*EntriesResults, error)
 	RequestVote(context.Context, *VoteArguments) (*VoteResults, error)
+	Join(context.Context, *JoinArguments) (*JoinResults, error)
 }
 
 // UnimplementedNodeServer can be embedded to have forward compatible implementations.
@@ -591,6 +765,9 @@ func (*UnimplementedNodeServer) AppendEntries(context.Context, *EntriesArguments
 }
 func (*UnimplementedNodeServer) RequestVote(context.Context, *VoteArguments) (*VoteResults, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RequestVote not implemented")
+}
+func (*UnimplementedNodeServer) Join(context.Context, *JoinArguments) (*JoinResults, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Join not implemented")
 }
 
 func RegisterNodeServer(s *grpc.Server, srv NodeServer) {
@@ -633,6 +810,24 @@ func _Node_RequestVote_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Node_Join_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(JoinArguments)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NodeServer).Join(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/service.Node/Join",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NodeServer).Join(ctx, req.(*JoinArguments))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Node_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "service.Node",
 	HandlerType: (*NodeServer)(nil),
@@ -644,6 +839,10 @@ var _Node_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RequestVote",
 			Handler:    _Node_RequestVote_Handler,
+		},
+		{
+			MethodName: "Join",
+			Handler:    _Node_Join_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
