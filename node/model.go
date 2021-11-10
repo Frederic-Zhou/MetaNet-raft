@@ -39,6 +39,8 @@ type NodeIndex = map[string]uint64
 ////////////////////////////////////////////////
 type Node struct {
 	//latest term server has seen (initialized to 0 on first boot, increases monotonically)
+	//当前轮的编号，Leader用此编号发送条目，以便于与Follower沟通数据一致性问题
+	//Candidate 会自增轮号
 	CurrentTerm uint64
 
 	//candidateId that received vote in current term (or null if none)

@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"math/rand"
 	"net"
 	"time"
 
@@ -16,9 +16,10 @@ import (
 func main() {
 
 	n := node.Node{}
+	n.Timeout = node.MinTimeout + time.Duration(rand.Intn(node.MaxTimeout-node.MinTimeout))
 
 	// 监听本地端口
-	lis, err := net.Listen("tcp", ":8080")
+	lis, err := net.Listen("tcp", ":8800")
 	if err != nil {
 		fmt.Printf("监听端口失败: %s", err)
 		return
@@ -35,30 +36,4 @@ func main() {
 		return
 	}
 
-}
-
-func CreateConn(address string, timeout time.Duration) (nodeClient *rpc.NodeClient, conn *grpc.ClientConn, err error) {
-
-	//建立链接
-	conn, err = grpc.Dial(address, grpc.WithInsecure())
-
-	if err != nil {
-		log.Fatalf("did not connect: %v", err)
-	}
-
-	defer conn.Close()
-
-	nodeclient := rpc.NewNodeClient(conn)
-
-	return &nodeclient, conn, err
-
-	// ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	// defer cancel()
-
-	// appendEntries, err := nodeClient.AppendEntries(ctx, &rpc.EntriesArguments{})
-	// if err != nil {
-	// 	log.Printf("user index could not greet: %v", err)
-	// }
-
-	// fmt.Println(appendEntries)
 }

@@ -28,20 +28,20 @@ func (l *Leader) AppendEntriesCall() {
 	// 检查全部Node的matchIndex ，如果大多数相同，那么,认为提交的数据成立
 	for {
 		values := []uint64{}
-		for _, v := range l.MatchIndex {
+		for _, N := range l.MatchIndex {
 
 			count := 1
 
-			if v > l.CommitIndex && l.Log[v].Term == l.CurrentTerm {
+			if N > l.CommitIndex && l.Log[N].Term == l.CurrentTerm {
 				for _, b := range values {
-					if v == b {
+					if N == b {
 						count += 1
 					}
 				}
 				if count > len(l.MatchIndex) {
-					l.CommitIndex = v
+					l.CommitIndex = N
 				} else {
-					values = append(values, v)
+					values = append(values, N)
 				}
 
 			}
@@ -72,10 +72,10 @@ func (l *Leader) connectAndAppend(cfg Config) {
 	for {
 		//创建一个请求参数对象，并配置其中的值
 		nextIndex := l.NextIndex[cfg.ID]
-		lastIndex := uint64(len(l.Log)) - 1
+		lastIndex := uint64(len(l.Log) - 1)
 
 		entries := []*rpc.Entry{}
-		if nextIndex < lastIndex+1 {
+		if nextIndex <= lastIndex {
 			entries = l.Log[nextIndex:lastIndex]
 		}
 
@@ -91,6 +91,7 @@ func (l *Leader) connectAndAppend(cfg Config) {
 		results, err := nodeclient.AppendEntries(ctx, eArguments)
 		if err != nil {
 			log.Printf("user index could not greet: %v", err)
+			continue
 		}
 
 		fmt.Println(results)
