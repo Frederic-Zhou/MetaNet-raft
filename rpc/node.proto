@@ -62,8 +62,8 @@ message voteResults {
 }
 
 message  Entry {
-	uint64 Term = 1; 
-	bytes Data = 2;
+	uint64 Term = 2; 
+	bytes Data = 3;
 }
 
 
