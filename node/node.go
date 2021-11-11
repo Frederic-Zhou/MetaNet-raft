@@ -41,10 +41,14 @@ func (n *Node) Become(role NodeRole) {
 		n.CurrentRole,
 		n.CurrentTerm,
 		n.Timeout.Milliseconds())
+
 	switch role {
 	case Role_Client:
 
 	case Role_Follower:
+		//开启监听
+		go n.Listen(":8800")
+		//记时
 		n.Timer()
 	case Role_Candidate:
 		n.RequestVoteCall()

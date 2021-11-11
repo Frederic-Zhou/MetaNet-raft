@@ -15,17 +15,12 @@ type Candidate = Node
 //raft/rpc_call: Start a vote
 func (c *Candidate) RequestVoteCall() {
 
-	if c.CurrentRole != Role_Candidate {
-		return
-	}
-
 	c.CurrentTerm += 1
 	c.SetRandTimeOut()
 	c.VotedCount = 1 //给自己投一票先
+	votedTime := time.Now()
 
 	logrus.Infof("New term is %d, timeout is %dms\n", c.CurrentTerm, c.Timeout.Milliseconds())
-
-	votedTime := time.Now()
 
 	for _, config := range c.NodesConfig {
 

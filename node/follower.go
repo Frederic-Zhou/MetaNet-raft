@@ -24,7 +24,9 @@ func (f *Follower) Timer() {
 
 		select {
 		case <-time.After(f.Timeout):
+
 			logrus.Infof("I'm %d,and timeout", f.CurrentRole)
+
 			if f.CurrentRole == Role_Follower {
 				//变成候选人,发起候选投票
 				f.Become(Role_Candidate)
