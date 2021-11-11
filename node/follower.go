@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"metanet/rpc"
 	"net"
+	"os"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -100,13 +101,12 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 }
 
 func (f *Follower) Listen() {
-
 	// 监听本地端口
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", f.Port))
 	if err != nil {
 		fmt.Printf("listen port error: %s", err.Error())
-		f.Port += 1
-		f.Listen()
+		os.Exit(0)
+
 	}
 
 	// 创建gRPC服务器
@@ -119,6 +119,7 @@ func (f *Follower) Listen() {
 	err = s.Serve(lis)
 	if err != nil {
 		logrus.Infof("start server error: %s \n", err)
-		return
+		os.Exit(0)
+
 	}
 }
