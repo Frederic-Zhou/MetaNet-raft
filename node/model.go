@@ -1,4 +1,4 @@
-//Node is the base struct of follower, candidata, leader, client
+//Node is the base struct of follower, candidate, leader, client
 package node
 
 import (
@@ -6,7 +6,14 @@ import (
 	"time"
 )
 
+type NodeState uint8
+
 const (
+	ClientSTATE = iota
+	FollowerSTATE
+	CandidateSTATE
+	LeaderSTATE
+
 	MinTimeout = 150
 	MaxTimeout = 300
 )
@@ -17,9 +24,10 @@ type Config struct {
 	//use to display name
 	Name string
 	//Node network address
-	Address    string
-	PrivateKey string
-	PublicKey  string
+	Address      string
+	PrivateKey   string
+	PublicKey    string
+	CurrentState NodeState
 }
 
 // type Entry struct {
@@ -50,7 +58,8 @@ type Node struct {
 	LeaderID string
 
 	//
-	Timeout time.Duration
+	Timeout    time.Duration
+	VotedCount uint
 
 	//Log entries;
 	//each entry contains command for state machine,

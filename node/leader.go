@@ -2,12 +2,12 @@ package node
 
 import (
 	context "context"
-	"fmt"
 	"log"
 	"time"
 
 	"metanet/rpc"
 
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
 
@@ -27,7 +27,14 @@ func (l *Leader) AppendEntriesCall() {
 	}
 	// 检查全部Node的matchIndex ，如果大多数相同，那么,认为提交的数据成立
 	for {
+		if l.CurrentState != LeaderSTATE {
+			//如果不再是Learder 退出
+			break
+		}
+
 		values := []uint64{}
+
+		// logrus.Infof("all nodes count is %d", len(l.MatchIndex))
 		for _, N := range l.MatchIndex {
 
 			count := 1
@@ -38,7 +45,7 @@ func (l *Leader) AppendEntriesCall() {
 						count += 1
 					}
 				}
-				if count > len(l.MatchIndex) {
+				if count > len(l.MatchIndex)/2 {
 					l.CommitIndex = N
 				} else {
 					values = append(values, N)
@@ -70,6 +77,12 @@ func (l *Leader) connectAndAppend(cfg Config) {
 
 	//间隔50毫秒，不断的给Follower发送条目或者心跳
 	for {
+
+		if l.CurrentState != LeaderSTATE {
+			//如果不再是Learder 退出
+			break
+		}
+
 		//创建一个请求参数对象，并配置其中的值
 		nextIndex := l.NextIndex[cfg.ID]
 		lastIndex := uint64(len(l.Log) - 1)
@@ -94,10 +107,14 @@ func (l *Leader) connectAndAppend(cfg Config) {
 			continue
 		}
 
-		fmt.Println(results)
+		logrus.Info(results)
+
+		if results.Term > l.CurrentTerm {
+			l.CurrentState = FollowerSTATE
+		}
 
 		//成功后，更新对应跟随者的MatchIndex和NextIndex
-		if results.Success && results.Term == l.CurrentTerm {
+		if results.Success {
 			l.MatchIndex[cfg.ID] = lastIndex
 			l.NextIndex[cfg.ID] = lastIndex + 1
 		} else {
