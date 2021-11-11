@@ -3,14 +3,10 @@ package node
 
 import (
 	context "context"
-	"fmt"
 	"metanet/rpc"
-	"net"
 
 	"github.com/gofrs/uuid"
 	"github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 )
 
 func NewNode(name string) (n *Node) {
@@ -27,6 +23,7 @@ func NewNode(name string) (n *Node) {
 	}
 
 	n.ID = id.String()
+	n.Port = 8800
 
 	n.SetRandTimeOut()
 	return
@@ -47,7 +44,9 @@ func (n *Node) Become(role NodeRole) {
 
 	case Role_Follower:
 		//开启监听
-		go n.Listen(":8800")
+		go n.Listen()
+		//加入到当前环境下的网络
+		n.Join()
 		//记时
 		n.Timer()
 	case Role_Candidate:
@@ -93,27 +92,4 @@ func (n *Node) RequestVote(ctx context.Context, in *rpc.VoteArguments) (result *
 //all of this
 func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (*rpc.ClientResults, error) {
 	return nil, nil
-}
-
-func (n *Node) Listen(port string) {
-
-	// 监听本地端口
-	lis, err := net.Listen("tcp", port)
-	if err != nil {
-		fmt.Printf("监听端口失败: %s", err)
-		return
-	}
-
-	// 创建gRPC服务器
-	s := grpc.NewServer()
-	// 注册服务
-	rpc.RegisterNodeServer(s, n)
-	reflection.Register(s)
-
-	logrus.Info("开始监听")
-	err = s.Serve(lis)
-	if err != nil {
-		fmt.Printf("开启服务失败: %s", err)
-		return
-	}
 }

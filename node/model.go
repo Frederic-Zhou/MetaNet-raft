@@ -25,8 +25,9 @@ type Config struct {
 	Name string
 	//Node network address
 	Address     string
-	PrivateKey  string
-	PublicKey   string
+	Port        uint
+	PrivateKey  []byte
+	PublicKey   []byte
 	CurrentRole NodeRole
 }
 
@@ -86,4 +87,6 @@ type Node struct {
 
 	//other known nodes configs
 	NodesConfig []Config
+
+	Heartbeat chan byte
 }
