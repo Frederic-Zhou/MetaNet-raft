@@ -15,7 +15,7 @@ type Candidate = Node
 //raft/rpc_call: Start a vote
 func (c *Candidate) RequestVoteCall() {
 
-	if c.CurrentState != CandidateSTATE {
+	if c.CurrentRole != Role_Candidate {
 		return
 	}
 
@@ -37,13 +37,13 @@ func (c *Candidate) RequestVoteCall() {
 
 	for {
 
-		logrus.Infof("I'm %d, I have votedCount is %d, all node count is %d \n", c.CurrentState, c.VotedCount, len(c.NodesConfig))
+		logrus.Infof("I'm %d, I have votedCount is %d, all node count is %d \n", c.CurrentRole, c.VotedCount, len(c.NodesConfig))
 
-		if c.CurrentState != CandidateSTATE {
+		if c.CurrentRole != Role_Candidate {
 			break
 		}
 		if c.VotedCount > uint(len(c.NodesConfig)/2) {
-			c.CurrentState = LeaderSTATE
+			c.CurrentRole = Role_Leader
 			break
 		}
 
@@ -53,7 +53,7 @@ func (c *Candidate) RequestVoteCall() {
 		}
 	}
 
-	c.ChangeTo(c.CurrentState)
+	c.Become(c.CurrentRole)
 
 }
 

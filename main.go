@@ -8,6 +8,6 @@ func main() {
 
 	n := node.NewNode("zeta")
 	go n.Listen(":8800")
-	n.ChangeTo(node.FollowerSTATE)
+	n.Become(node.Role_Follower)
 
 }

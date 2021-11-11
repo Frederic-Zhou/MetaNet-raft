@@ -24,10 +24,10 @@ func (f *Follower) Timer() {
 
 		select {
 		case <-time.After(f.Timeout):
-			logrus.Infof("I'm %d,and timeout", f.CurrentState)
-			if f.CurrentState == FollowerSTATE {
+			logrus.Infof("I'm %d,and timeout", f.CurrentRole)
+			if f.CurrentRole == Role_Follower {
 				//变成候选人,发起候选投票
-				f.ChangeTo(CandidateSTATE)
+				f.Become(Role_Candidate)
 			}
 		case <-heartbeat:
 			logrus.Info("heartbeat,refresh timeout")
@@ -41,7 +41,7 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 	//收到心跳重制timer
 	heartbeat <- 0
 
-	f.CurrentState = FollowerSTATE
+	f.CurrentRole = Role_Follower
 
 	result.Term = f.CurrentTerm
 	result.Success = true

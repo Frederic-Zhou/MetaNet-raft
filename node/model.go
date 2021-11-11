@@ -6,13 +6,13 @@ import (
 	"time"
 )
 
-type NodeState uint8
+type NodeRole uint8
 
 const (
-	ClientSTATE = iota
-	FollowerSTATE
-	CandidateSTATE
-	LeaderSTATE
+	Role_Client NodeRole = iota
+	Role_Follower
+	Role_Candidate
+	Role_Leader
 
 	MinTimeout = 150
 	MaxTimeout = 300
@@ -24,10 +24,10 @@ type Config struct {
 	//use to display name
 	Name string
 	//Node network address
-	Address      string
-	PrivateKey   string
-	PublicKey    string
-	CurrentState NodeState
+	Address     string
+	PrivateKey  string
+	PublicKey   string
+	CurrentRole NodeRole
 }
 
 // type Entry struct {

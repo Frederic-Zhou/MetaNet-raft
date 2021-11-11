@@ -27,7 +27,7 @@ func (l *Leader) AppendEntriesCall() {
 	}
 	// 检查全部Node的matchIndex ，如果大多数相同，那么,认为提交的数据成立
 	for {
-		if l.CurrentState != LeaderSTATE {
+		if l.CurrentRole != Role_Leader {
 			//如果不再是Learder 退出
 			break
 		}
@@ -78,7 +78,7 @@ func (l *Leader) connectAndAppend(cfg Config) {
 	//间隔50毫秒，不断的给Follower发送条目或者心跳
 	for {
 
-		if l.CurrentState != LeaderSTATE {
+		if l.CurrentRole != Role_Leader {
 			//如果不再是Learder 退出
 			break
 		}
@@ -110,7 +110,7 @@ func (l *Leader) connectAndAppend(cfg Config) {
 		logrus.Info(results)
 
 		if results.Term > l.CurrentTerm {
-			l.CurrentState = FollowerSTATE
+			l.CurrentRole = Role_Follower
 		}
 
 		//成功后，更新对应跟随者的MatchIndex和NextIndex

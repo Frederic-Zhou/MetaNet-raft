@@ -32,23 +32,23 @@ func NewNode(name string) (n *Node) {
 	return
 }
 
-func (n *Node) ChangeTo(state NodeState) {
-	n.CurrentState = state
+func (n *Node) Become(role NodeRole) {
+	n.CurrentRole = role
 
-	logrus.Infof("Change to %d \n", state)
+	logrus.Infof("Change to %d \n", role)
 
 	logrus.Infof("Now I'm %d term is %d, timeout is %dms \n",
-		n.CurrentState,
+		n.CurrentRole,
 		n.CurrentTerm,
 		n.Timeout.Milliseconds())
-	switch state {
-	case ClientSTATE:
+	switch role {
+	case Role_Client:
 
-	case FollowerSTATE:
+	case Role_Follower:
 		n.Timer()
-	case CandidateSTATE:
+	case Role_Candidate:
 		n.RequestVoteCall()
-	case LeaderSTATE:
+	case Role_Leader:
 		n.AppendEntriesCall()
 
 	}
