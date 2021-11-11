@@ -3,10 +3,15 @@ package node
 
 import (
 	context "context"
+	"fmt"
 	"metanet/rpc"
+	"net"
+	"time"
 
 	"github.com/gofrs/uuid"
 	"github.com/sirupsen/logrus"
+	"github.com/stefanwichmann/lanscan"
+	"google.golang.org/grpc"
 )
 
 func NewNode(name string) (n *Node) {
@@ -23,7 +28,6 @@ func NewNode(name string) (n *Node) {
 	}
 
 	n.ID = id.String()
-	n.Port = 8800
 
 	n.SetRandTimeOut()
 	return
@@ -43,11 +47,6 @@ func (n *Node) Become(role NodeRole) {
 	case Role_Client:
 
 	case Role_Follower:
-		//开启监听
-		go n.Listen()
-		//加入到当前环境下的网络
-		n.Join()
-		//记时
 		n.Timer()
 	case Role_Candidate:
 		n.RequestVoteCall()
@@ -55,6 +54,53 @@ func (n *Node) Become(role NodeRole) {
 		n.AppendEntriesCall()
 
 	}
+}
+
+func (f *Follower) Join() error {
+	//先填充自己的网络资料配置
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	for _, address := range addrs {
+		// 检查ip地址判断是否回环地址
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				f.Config.Address = ipnet.IP.String()
+			}
+		}
+	}
+
+	f.Config.PrivateKey = []byte{}
+	f.Config.PublicKey = []byte{}
+
+	//查找本地网络环境下的节点
+	hosts, err := lanscan.ScanLinkLocal("tcp4", PORT, 20, 5*time.Second)
+	if err != nil {
+		return err
+	}
+
+	for _, host := range hosts {
+		conn, err := grpc.Dial(fmt.Sprintf("%s:%d", host, PORT), grpc.WithInsecure())
+		if err != nil {
+			continue
+		}
+
+		nodeclient := rpc.NewNodeClient(conn)
+		//创建一个超时的context，在下面进行rpc请求的时候，通过这个超时context控制请求超时
+		ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
+		defer cancel()
+		result, err := nodeclient.ClientRequest(ctx, &rpc.ClientArguments{Data: []byte("join")})
+
+		if err != nil || !result.Status {
+			continue
+		}
+
+	}
+
+	return nil
+
 }
 
 //raft/rpc_server: implemented vote, after Follower change to Candidate then call to Nodes
@@ -67,9 +113,10 @@ func (n *Node) RequestVote(ctx context.Context, in *rpc.VoteArguments) (result *
 		return
 	}
 
+	lastIndex := len(n.Log) - 1
 	if n.VotedFor == "" || n.VotedFor == in.CandidateID {
 		//至少一样新
-		if in.LastLogIndex >= uint64(len(n.Log)-1) {
+		if in.LastLogIndex >= uint64(lastIndex) && in.LastLogTerm >= n.Log[lastIndex].Term {
 			result.VoteGranted = true
 		}
 	}

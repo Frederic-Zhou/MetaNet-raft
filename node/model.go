@@ -16,6 +16,8 @@ const (
 
 	MinTimeout = 150
 	MaxTimeout = 300
+
+	PORT = 8800
 )
 
 type Config struct {
@@ -24,10 +26,11 @@ type Config struct {
 	//use to display name
 	Name string
 	//Node network address
-	Address     string
-	Port        uint
-	PrivateKey  []byte
-	PublicKey   []byte
+	Address string
+
+	PrivateKey []byte
+	PublicKey  []byte
+
 	CurrentRole NodeRole
 }
 
@@ -36,10 +39,11 @@ type Config struct {
 // 	Term uint64
 // 	Data []byte
 // }
-
+//直接使用RPC中定义的Entry，减少类型转换
 type Entry = rpc.Entry
 
 // for each server, key is server's id,value is the server's index
+// 实际运行过程中尝试是否会出现Map的同时读写错误，如果出现，可能需要使用互斥锁或者sync Map 或者 实用切片
 type NodeIndex = map[string]uint64
 
 ////////////////////////////////////////////////
@@ -59,7 +63,8 @@ type Node struct {
 	LeaderID string
 
 	//
-	Timeout    time.Duration
+	Timeout time.Duration
+	//
 	VotedCount uint
 
 	//Log entries;

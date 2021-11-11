@@ -21,28 +21,6 @@ func (f *Follower) SetRandTimeOut() {
 	f.Timeout = time.Millisecond * time.Duration((MinTimeout + r.Intn(MaxTimeout-MinTimeout)))
 }
 
-func (f *Follower) Join() {
-	//先填充自己的网络资料配置
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	for _, address := range addrs {
-		// 检查ip地址判断是否回环地址
-		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				f.Config.Address = ipnet.IP.String()
-			}
-		}
-	}
-
-	f.Config.PrivateKey = []byte{}
-	f.Config.PublicKey = []byte{}
-
-	//查找本地网络环境下的节点
-}
-
 func (f *Follower) Timer() {
 
 	for {
@@ -87,6 +65,7 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 	//写入到Log中
 	f.Log = append(f.Log, in.GetEntries()...)
 
+	//同步Leader的CommitIndex
 	if in.LeaderCommit > f.CommitIndex {
 
 		if in.PrevLogIndex < in.LeaderCommit {
@@ -102,7 +81,7 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 
 func (f *Follower) Listen() {
 	// 监听本地端口
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", f.Port))
+	lis, err := net.Listen("tcp", fmt.Sprintf("%d", PORT))
 	if err != nil {
 		fmt.Printf("listen port error: %s", err.Error())
 		os.Exit(0)
@@ -115,7 +94,7 @@ func (f *Follower) Listen() {
 	rpc.RegisterNodeServer(s, f)
 	reflection.Register(s)
 
-	logrus.Infof("start listen %s \n", f.Port)
+	logrus.Infof("start listen \n")
 	err = s.Serve(lis)
 	if err != nil {
 		logrus.Infof("start server error: %s \n", err)
