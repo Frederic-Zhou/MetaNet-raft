@@ -71,11 +71,11 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 	}
 	//链接各个节点
 	conn, err := grpc.Dial(cfg.Address, grpc.WithInsecure())
-
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 		return
 	}
+
 	defer conn.Close()
 
 	nodeclient := rpc.NewNodeClient(conn)
@@ -113,8 +113,8 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 		defer cancel()
 		results, err := nodeclient.AppendEntries(ctx, eArguments)
 		if err != nil {
-			logrus.Errorf("AppendEntries err:%v, %v \n", cfg.Address, err)
-			time.Sleep(time.Millisecond * MinTimeout / 3) //1/3个最小超时时间发送一次
+			logrus.Errorf("AppendEntries err:%v \n", cfg.Address) // err)
+			time.Sleep(time.Millisecond * MinTimeout / 3)         //1/3个最小超时时间发送一次
 			continue
 		}
 
