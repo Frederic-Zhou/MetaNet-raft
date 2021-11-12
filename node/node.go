@@ -55,7 +55,6 @@ func NewNode() (n *Node, err error) {
 	n.Config.PrivateKey = []byte{}
 	n.Config.PublicKey = []byte{}
 
-	n.SetRandTimeOut()
 	n.Log = []*rpc.Entry{
 		{
 			Term: 0,
@@ -63,7 +62,7 @@ func NewNode() (n *Node, err error) {
 		},
 	}
 
-	n.Timer = time.NewTimer(n.Timeout)
+	n.Timer = time.NewTimer(RandTimeOut())
 
 	return
 }
@@ -77,15 +76,10 @@ func (n *Node) Work() {
 			<-n.Timer.C
 			//Timer返回，说明超时了，身份转变为Candidate
 			n.Become(Role_Candidate)
-
 		case Role_Candidate:
-
 			if n.RequestVoteCall() && n.CurrentRole == Role_Candidate {
-
 				n.Become(Role_Leader)
-
 			}
-
 		case Role_Leader:
 			n.AppendEntriesCall()
 			//领导人退位的原因是收到了更高的Term

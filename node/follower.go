@@ -16,16 +16,16 @@ import (
 
 type Follower = Node
 
-func (f *Follower) SetRandTimeOut() {
+func RandTimeOut() time.Duration {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	f.Timeout = time.Millisecond * time.Duration((MinTimeout + r.Intn(MaxTimeout-MinTimeout)))
+	return time.Millisecond * time.Duration((MinTimeout + r.Intn(MaxTimeout-MinTimeout)))
 }
 
 //raft/rpc_server: implemented Log and hartbeat transfer, Learder call to Followers
 func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) (result *rpc.EntriesResults, err error) {
 	logrus.Warn("Receive Leader's Append...")
 	//收到心跳重制timer
-	f.Timer.Reset(f.Timeout)
+	f.Timer.Reset(RandTimeOut())
 	logrus.Warn("Reset Timer...")
 
 	result = &rpc.EntriesResults{}

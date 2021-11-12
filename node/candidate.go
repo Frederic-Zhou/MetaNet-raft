@@ -15,12 +15,12 @@ type Candidate = Node
 //raft/rpc_call: Start a vote
 func (c *Candidate) RequestVoteCall() bool {
 
-	c.CurrentTerm += 1
-	c.SetRandTimeOut()
-	c.VotedCount = 1 //给自己投一票先
-	votedTime := time.Now()
+	c.CurrentTerm += 1 //当前任期自增
+	c.VotedCount = 1   //给自己投一票先
+	timeout := RandTimeOut()
+	votedTime := time.Now() //计时
 
-	logrus.Infof("New term is %d, timeout is %dms\n", c.CurrentTerm, c.Timeout.Milliseconds())
+	logrus.Infof("New term is %d, timeout is %dms\n", c.CurrentTerm, timeout)
 
 	for i, config := range c.NodesConfig {
 
@@ -44,7 +44,7 @@ func (c *Candidate) RequestVoteCall() bool {
 			return true
 		}
 		//超时
-		if votedTime.Add(c.Timeout).Before(time.Now()) {
+		if votedTime.Add(timeout).Before(time.Now()) {
 			//选举超时
 			return false
 		}

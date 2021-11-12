@@ -67,8 +67,6 @@ type Node struct {
 	LeaderID string
 
 	//
-	Timeout time.Duration
-	//
 	VotedCount uint
 
 	//Log entries;
