@@ -40,9 +40,11 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 		return
 	}
 
-	//如果接收到的RPC请求或响应中，任期号大于当前任期号，则当前任期号改为接收到的任期号
+	//???????????
 	f.CurrentRole = Role_Follower
+	//如果接收到的RPC请求或响应中，任期号大于当前任期号，则当前任期号改为接收到的任期号
 	f.CurrentTerm = in.Term
+	//???????????
 
 	//如果没有找到匹配PrevLogIndex和PrevLogTerm的，则返回false
 	if !(uint64(len(f.Log)-1) >= in.PrevLogIndex && f.Log[in.PrevLogIndex].Term == in.PrevLogTerm) {

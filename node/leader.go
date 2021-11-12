@@ -118,7 +118,8 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 		logrus.Info("Append:", results)
 
 		if results.Term > l.CurrentTerm {
-			l.CurrentRole = Role_Follower
+			l.CurrentTerm = results.Term
+			l.Become(Role_Follower)
 		}
 
 		//成功后，更新对应跟随者的MatchIndex和NextIndex

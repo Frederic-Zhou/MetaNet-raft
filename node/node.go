@@ -88,6 +88,8 @@ func (n *Node) Work() {
 
 		case Role_Leader:
 			n.AppendEntriesCall()
+			//领导人退位的原因是收到了更高的Term
+			n.Become(Role_Follower)
 		}
 	}
 }

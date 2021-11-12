@@ -81,6 +81,12 @@ func (c *Candidate) connectAndVote(cfg Config) {
 		return
 	}
 
+	if results.Term > c.CurrentTerm {
+		c.CurrentTerm = results.Term
+		c.Become(Role_Follower)
+		return
+	}
+
 	logrus.Info(results)
 	if results.VoteGranted {
 		c.VotedCount += 1
