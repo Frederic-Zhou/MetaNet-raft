@@ -4,6 +4,7 @@ import (
 	"metanet/node"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -43,6 +44,7 @@ func main() {
 
 	//开启监听
 	go n.RpcServerStart()
+	time.Sleep(3 * time.Second)
 	//加入到当前环境下的网络
 	// n.Join()
 
