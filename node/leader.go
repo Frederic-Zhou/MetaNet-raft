@@ -14,7 +14,7 @@ import (
 //Leader is special node
 type Leader = Node
 
-//raft/rpc_call:
+//raft/rpc_call:一旦成为领导人，立即发送日志
 func (l *Leader) AppendEntriesCall() {
 
 	// 读取出所有的节点配置地址
@@ -32,25 +32,26 @@ func (l *Leader) AppendEntriesCall() {
 			return
 		}
 
-		values := []uint64{}
-
 		// logrus.Infof("all nodes count is %d", len(l.MatchIndex))
 		for _, config := range l.NodesConfig {
 
-			count := 1
-
+			//假设存在N
+			//这个N，从节点的matchIndex中找。（这个方法是本人自己设计，而非Raft定义，Raft中没有明确定义这个N的来源）
 			N := config.MatchIndex
+			count := 0
 
+			//满足N > commitIndex , 使得 大多数 matchIndex[i]>=N 以及 log[N].term == currentTerm
+			//则令 commitIndex=N
 			if N > l.CommitIndex && l.Log[N].Term == l.CurrentTerm {
-				for _, b := range values {
-					if N == b {
-						count += 1
+
+				for _, cfg := range l.NodesConfig {
+					if cfg.MatchIndex >= N {
+						count++
 					}
 				}
+
 				if count > len(l.NodesConfig)/2 {
 					l.CommitIndex = N
-				} else {
-					values = append(values, N)
 				}
 
 			}
@@ -93,6 +94,7 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 
 		//对于Follower 追加日志中尚未写入的所有条目
 		entries := []*rpc.Entry{}
+		//对于跟随者，最后日志条目的索引大于等于nextIndex
 		if nextIndex <= lastIndex {
 			entries = l.Log[nextIndex:lastIndex]
 		}
@@ -118,6 +120,7 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 
 		logrus.Info("Append:", results)
 
+		//如果收到的Term大于当前轮，成为
 		if results.Term > l.CurrentTerm {
 			l.CurrentTerm = results.Term
 			l.Become(Role_Follower)

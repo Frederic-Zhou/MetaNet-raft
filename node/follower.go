@@ -16,7 +16,7 @@ import (
 
 type Follower = Node
 
-func RandTimeOut() time.Duration {
+func RandMillisecond() time.Duration {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	return time.Millisecond * time.Duration((MinTimeout + r.Intn(MaxTimeout-MinTimeout)))
 }
@@ -25,7 +25,7 @@ func RandTimeOut() time.Duration {
 func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) (result *rpc.EntriesResults, err error) {
 	logrus.Warn("Receive Leader's Append...")
 	//收到心跳重制timer
-	f.Timer.Reset(RandTimeOut())
+	f.Timer.Reset(RandMillisecond())
 	logrus.Warn("Reset Timer...")
 
 	result = &rpc.EntriesResults{}

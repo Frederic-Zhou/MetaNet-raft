@@ -62,7 +62,7 @@ func NewNode() (n *Node, err error) {
 		},
 	}
 
-	n.Timer = time.NewTimer(RandTimeOut())
+	n.Timer = time.NewTimer(RandMillisecond())
 
 	return
 }
@@ -77,10 +77,11 @@ func (n *Node) Work() {
 			//Timer返回，说明超时了，身份转变为Candidate
 			n.Become(Role_Candidate)
 		case Role_Candidate:
-			if n.RequestVoteCall() && n.CurrentRole == Role_Candidate {
+			if n.RequestVoteCall() {
 				n.Become(Role_Leader)
 			}
 		case Role_Leader:
+			// 一旦成为领导人，立即发送日志
 			n.AppendEntriesCall()
 			//领导人退位的原因是收到了更高的Term
 			n.Become(Role_Follower)
@@ -90,10 +91,9 @@ func (n *Node) Work() {
 
 func (n *Node) Become(role NodeRole) {
 	n.CurrentRole = role
-	logrus.Infof("Now I'm %d term is %d, timeout is %dms \n",
+	logrus.Infof("Now I'm %d term is %d \n",
 		n.CurrentRole,
-		n.CurrentTerm,
-		n.Timeout.Milliseconds())
+		n.CurrentTerm)
 }
 
 func (n *Node) ApplyStateMachine() {
@@ -152,7 +152,7 @@ func (n *Node) RequestVote(ctx context.Context, in *rpc.VoteArguments) (result *
 
 	logrus.Warn("Receive Candidate's RequestVote...")
 	//收到心跳重制timer
-	n.Timer.Reset(n.Timeout)
+	n.Timer.Reset(RandMillisecond())
 	logrus.Warn("Reset Timer...")
 
 	result = &rpc.VoteResults{}

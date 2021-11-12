@@ -17,10 +17,9 @@ func (c *Candidate) RequestVoteCall() bool {
 
 	c.CurrentTerm += 1 //当前任期自增
 	c.VotedCount = 1   //给自己投一票先
-	timeout := RandTimeOut()
-	votedTime := time.Now() //计时
+	c.Timer.Reset(RandMillisecond())
 
-	logrus.Infof("New term is %d, timeout is %dms\n", c.CurrentTerm, timeout)
+	logrus.Infof("New term is %d \n", c.CurrentTerm)
 
 	for i, config := range c.NodesConfig {
 
@@ -37,17 +36,17 @@ func (c *Candidate) RequestVoteCall() bool {
 
 	for {
 
-		// logrus.Infof("I'm %d, I have votedCount is %d, all node count is %d \n", c.CurrentRole, c.VotedCount, len(c.NodesConfig))
-		//成为选举人
-		if c.VotedCount > uint(len(c.NodesConfig)/2) {
-			logrus.Infof("votedCount %d,%v", c.VotedCount, c.VotedCount > uint(len(c.NodesConfig)/2))
-			return true
-		}
-		//超时
-		if votedTime.Add(timeout).Before(time.Now()) {
-			//选举超时
+		select {
+		case <-c.Timer.C:
 			return false
+		default:
+			//如果收到大多数服务器的选票，成为领导人
+			logrus.Infof("votedCount %d/%d", c.VotedCount, len(c.NodesConfig))
+			if c.VotedCount > uint(len(c.NodesConfig)/2) {
+				return true
+			}
 		}
+
 	}
 
 }
@@ -73,7 +72,7 @@ func (c *Candidate) connectAndVote(cfg Config) {
 	}
 
 	//创建一个超时的context，在下面进行rpc请求的时候，通过这个超时context控制请求超时
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*MinTimeout)
 	defer cancel()
 	results, err := nodeclient.RequestVote(ctx, vArguments)
 	if err != nil {
