@@ -3,6 +3,7 @@ package node
 
 import (
 	"metanet/rpc"
+	"sync"
 	"time"
 )
 
@@ -14,17 +15,16 @@ const (
 	Role_Candidate
 	Role_Leader
 
-	MinTimeout = 150
-	MaxTimeout = 300
-
-	PORT = 8800
+	MinTimeout = 1500
+	MaxTimeout = 3000
 )
+
+var PORT = 8800
 
 type Config struct {
 	//Node ID
 	ID string
-	//use to display name
-	Name string
+
 	//Node network address
 	Address string
 
@@ -32,6 +32,11 @@ type Config struct {
 	PublicKey  []byte
 
 	CurrentRole NodeRole
+
+	//下一次应该发送的索引位置
+	NextIndex uint64
+	//已复制的最大Log索引
+	MatchIndex uint64
 }
 
 // type Entry struct {
@@ -43,8 +48,7 @@ type Config struct {
 type Entry = rpc.Entry
 
 // for each server, key is server's id,value is the server's index
-// 实际运行过程中尝试是否会出现Map的同时读写错误，如果出现，可能需要使用互斥锁或者sync Map 或者 实用切片
-type NodeIndex = map[string]uint64
+type NodeIndex = sync.Map
 
 ////////////////////////////////////////////////
 // Persistent state on all servers:
@@ -82,10 +86,10 @@ type Node struct {
 	//Volatile state on leaders:
 	//(Reinitialized after election)
 	//for each server, index of the next log entry to send to that server (initialized to leader last log index + 1)
-	NextIndex NodeIndex
+	// NextIndex NodeIndex //包含到NodesConfig中
 
 	//for each server, index of highest log entry known to be replicated on server (initialized to 0, increases monotonically)
-	MatchIndex NodeIndex
+	// MatchIndex NodeIndex  //包含到NodesConfig中
 
 	//self Config informations
 	Config
@@ -93,5 +97,5 @@ type Node struct {
 	//other known nodes configs
 	NodesConfig []Config
 
-	Heartbeat chan byte
+	Heartbeat *time.Timer
 }

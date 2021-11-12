@@ -21,33 +21,16 @@ func (f *Follower) SetRandTimeOut() {
 	f.Timeout = time.Millisecond * time.Duration((MinTimeout + r.Intn(MaxTimeout-MinTimeout)))
 }
 
-func (f *Follower) Timer() {
-
-	for {
-
-		select {
-		case <-time.After(f.Timeout):
-
-			logrus.Infof("I'm %d,and timeout", f.CurrentRole)
-
-			if f.CurrentRole == Role_Follower {
-				//变成候选人,发起候选投票
-				f.Become(Role_Candidate)
-			}
-		case <-f.Heartbeat:
-			logrus.Info("heartbeat,refresh timeout")
-		}
-	}
-
-}
-
 //raft/rpc_server: implemented Log and hartbeat transfer, Learder call to Followers
 func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) (result *rpc.EntriesResults, err error) {
+	logrus.Warn("============")
+
 	//收到心跳重制timer
-	f.Heartbeat <- 0
+	f.Heartbeat.Reset(f.Timeout)
 
-	f.CurrentRole = Role_Follower
+	logrus.Warn("+++++++")
 
+	result = &rpc.EntriesResults{}
 	result.Term = f.CurrentTerm
 	result.Success = true
 
@@ -57,6 +40,10 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 		return
 	}
 
+	//如果接收到的RPC请求或响应中，任期号大于当前任期号，则当前任期号改为接收到的任期号
+	f.CurrentRole = Role_Follower
+	f.CurrentTerm = in.Term
+
 	//如果没有找到匹配PrevLogIndex和PrevLogTerm的，则返回false
 	if !(uint64(len(f.Log)-1) >= in.PrevLogIndex && f.Log[in.PrevLogIndex].Term == in.PrevLogTerm) {
 		result.Success = false
@@ -64,6 +51,8 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 	}
 	//写入到Log中
 	f.Log = append(f.Log, in.GetEntries()...)
+
+	logrus.Info(f.Log)
 
 	//同步Leader的CommitIndex
 	if in.LeaderCommit > f.CommitIndex {
@@ -79,9 +68,9 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 	return
 }
 
-func (f *Follower) Listen() {
+func (f *Follower) RpcServerStart() {
 	// 监听本地端口
-	lis, err := net.Listen("tcp", fmt.Sprintf("%d", PORT))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", PORT))
 	if err != nil {
 		fmt.Printf("listen port error: %s", err.Error())
 		os.Exit(0)

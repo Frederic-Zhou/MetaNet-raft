@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"metanet/rpc"
 	"net"
+	"strconv"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -14,12 +15,13 @@ import (
 	"google.golang.org/grpc"
 )
 
-func NewNode(name string) (n *Node) {
+func NewNode() (n *Node, err error) {
 
 	n = &Node{}
 
 	var id uuid.UUID
-	var err error
+
+	//创建ID
 	for {
 		id, err = uuid.NewV4()
 		if err == nil {
@@ -29,51 +31,76 @@ func NewNode(name string) (n *Node) {
 
 	n.ID = id.String()
 
-	n.SetRandTimeOut()
-	return
-}
+	n.ID = strconv.Itoa(PORT) //测试
 
-func (n *Node) Become(role NodeRole) {
-	n.CurrentRole = role
-
-	logrus.Infof("Change to %d \n", role)
-
-	logrus.Infof("Now I'm %d term is %d, timeout is %dms \n",
-		n.CurrentRole,
-		n.CurrentTerm,
-		n.Timeout.Milliseconds())
-
-	switch role {
-	case Role_Client:
-
-	case Role_Follower:
-		n.Timer()
-	case Role_Candidate:
-		n.RequestVoteCall()
-	case Role_Leader:
-		n.AppendEntriesCall()
-
-	}
-}
-
-func (f *Follower) Join() error {
 	//先填充自己的网络资料配置
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
-		fmt.Println(err)
-		return err
+		return
 	}
 	for _, address := range addrs {
 		// 检查ip地址判断是否回环地址
 		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
 			if ipnet.IP.To4() != nil {
-				f.Config.Address = ipnet.IP.String()
+				n.Config.Address = ipnet.IP.String()
 			}
 		}
 	}
 
-	f.Config.PrivateKey = []byte{}
-	f.Config.PublicKey = []byte{}
+	if n.Config.Address == "" {
+		err = fmt.Errorf("no network")
+		return
+	}
+
+	n.Config.PrivateKey = []byte{}
+	n.Config.PublicKey = []byte{}
+
+	n.SetRandTimeOut()
+	n.Log = []*rpc.Entry{
+		{
+			Term: 0,
+			Data: []byte{},
+		},
+	}
+
+	n.Heartbeat = time.NewTimer(n.Timeout)
+
+	return
+}
+
+func (n *Node) Work() {
+	for {
+		switch n.CurrentRole {
+		case Role_Client:
+
+		case Role_Follower:
+			<-n.Heartbeat.C
+			//timer返回，说明超时了，身份转变为Candidate
+			n.Become(Role_Candidate)
+
+		case Role_Candidate:
+
+			if n.RequestVoteCall() && n.CurrentRole == Role_Candidate {
+
+				n.Become(Role_Leader)
+
+			}
+
+		case Role_Leader:
+			n.AppendEntriesCall()
+		}
+	}
+}
+
+func (n *Node) Become(role NodeRole) {
+	n.CurrentRole = role
+	logrus.Infof("Now I'm %d term is %d, timeout is %dms \n",
+		n.CurrentRole,
+		n.CurrentTerm,
+		n.Timeout.Milliseconds())
+}
+
+func (f *Follower) Join() error {
 
 	//查找本地网络环境下的节点
 	hosts, err := lanscan.ScanLinkLocal("tcp4", PORT, 20, 5*time.Second)
@@ -81,7 +108,15 @@ func (f *Follower) Join() error {
 		return err
 	}
 
+	//把自己的地址放最前面，先尝试连接自己
+	hosts = append([]string{f.Config.Address}, hosts...)
+
+	leaderAddr := ""
 	for _, host := range hosts {
+		if leaderAddr != "" {
+			host = leaderAddr
+		}
+
 		conn, err := grpc.Dial(fmt.Sprintf("%s:%d", host, PORT), grpc.WithInsecure())
 		if err != nil {
 			continue
@@ -93,8 +128,12 @@ func (f *Follower) Join() error {
 		defer cancel()
 		result, err := nodeclient.ClientRequest(ctx, &rpc.ClientArguments{Data: []byte("join")})
 
-		if err != nil || !result.Status {
+		if err != nil {
 			continue
+		}
+
+		if !result.Status && string(result.Data) != "" {
+			leaderAddr = string(result.Data)
 		}
 
 	}
@@ -106,6 +145,9 @@ func (f *Follower) Join() error {
 //raft/rpc_server: implemented vote, after Follower change to Candidate then call to Nodes
 func (n *Node) RequestVote(ctx context.Context, in *rpc.VoteArguments) (result *rpc.VoteResults, err error) {
 
+	logrus.Warn("vvvvvvvvvvvvv")
+
+	result = &rpc.VoteResults{}
 	result.Term = n.CurrentTerm
 	result.VoteGranted = false
 
@@ -137,6 +179,24 @@ func (n *Node) RequestVote(ctx context.Context, in *rpc.VoteArguments) (result *
 //*******************
 //all client or new node request package to ClientRequest,include Join, rejoin, split, datarequest, ....
 //all of this
-func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (*rpc.ClientResults, error) {
-	return nil, nil
+func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (result *rpc.ClientResults, err error) {
+
+	result = &rpc.ClientResults{}
+	if string(in.Data) == "join" {
+		result.Data = []byte{}
+		result.Status = false
+		if n.CurrentRole == Role_Leader {
+			result.Data = []byte("ok")
+			result.Status = true
+		} else {
+			for _, cfg := range n.NodesConfig {
+				if cfg.ID == n.LeaderID {
+					result.Data = []byte(cfg.Address)
+					result.Status = false
+					break
+				}
+			}
+		}
+	}
+	return
 }
