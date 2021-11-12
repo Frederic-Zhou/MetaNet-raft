@@ -164,18 +164,28 @@ func (n *Node) RequestVote(ctx context.Context, in *rpc.VoteArguments) (result *
 		return
 	}
 
+	if in.Term > n.CurrentTerm {
+		n.Become(Role_Follower)
+		//如果接收到的RPC请求或响应中，任期号大于当前任期号，则当前任期号改为接收到的任期号
+		n.CurrentTerm = in.Term
+		n.VotedFor = ""
+	}
+
 	lastIndex := len(n.Log) - 1
 	//如果VotedFor为空或者为CandidateID，并且候选人的日志至少和自己一样新，那么投票给他
 	if n.VotedFor == "" || n.VotedFor == in.CandidateID {
 		//至少一样新
+		logrus.Warn("VotedFor ing:", n.VotedFor)
 		if in.LastLogIndex >= uint64(lastIndex) && in.LastLogTerm >= n.Log[lastIndex].Term {
 			result.VoteGranted = true
 			n.VotedFor = in.CandidateID
+			logrus.Warn("VotedFor done:", n.VotedFor)
+		} else {
+			logrus.Warn("VotedFor Error:", in.LastLogIndex, lastIndex, in.LastLogTerm, n.Log[lastIndex].Term)
 		}
+	} else {
+		logrus.Warn("reject - VotedFor ing:", n.VotedFor)
 	}
-
-	//?????
-	//note: 什么时候清理掉VotedFor的数据呢 ？
 
 	return
 }
