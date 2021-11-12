@@ -25,7 +25,7 @@ func (f *Follower) SetRandTimeOut() {
 func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) (result *rpc.EntriesResults, err error) {
 	logrus.Warn("Receive Leader's Append...")
 	//收到心跳重制timer
-	f.Heartbeat.Reset(f.Timeout)
+	f.Timer.Reset(f.Timeout)
 	logrus.Warn("Reset Timer...")
 
 	result = &rpc.EntriesResults{}
@@ -61,7 +61,7 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 	//追加日志中尚未存在的任何条目
 	f.Log = append(f.Log, in.GetEntries()...)
 
-	logrus.Info(f.Log)
+	// logrus.Info(f.Log)
 
 	//同步Leader的CommitIndex
 	//note: 有可能出现本节点是较慢的节点，Leader已经提交了较高的Index，但是本节点未必获得了领导的最高提交Index的日志

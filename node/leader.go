@@ -91,6 +91,7 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 		nextIndex := cfg.NextIndex
 		lastIndex := uint64(len(l.Log) - 1)
 
+		//对于Follower 追加日志中尚未写入的所有条目
 		entries := []*rpc.Entry{}
 		if nextIndex <= lastIndex {
 			entries = l.Log[nextIndex:lastIndex]

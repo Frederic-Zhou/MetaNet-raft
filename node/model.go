@@ -97,5 +97,5 @@ type Node struct {
 	//other known nodes configs
 	NodesConfig []Config
 
-	Heartbeat *time.Timer
+	Timer *time.Timer
 }

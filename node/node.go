@@ -63,7 +63,7 @@ func NewNode() (n *Node, err error) {
 		},
 	}
 
-	n.Heartbeat = time.NewTimer(n.Timeout)
+	n.Timer = time.NewTimer(n.Timeout)
 
 	return
 }
@@ -74,8 +74,8 @@ func (n *Node) Work() {
 		case Role_Client:
 
 		case Role_Follower:
-			<-n.Heartbeat.C
-			//timer返回，说明超时了，身份转变为Candidate
+			<-n.Timer.C
+			//Timer返回，说明超时了，身份转变为Candidate
 			n.Become(Role_Candidate)
 
 		case Role_Candidate:
@@ -103,8 +103,12 @@ func (n *Node) Become(role NodeRole) {
 }
 
 func (n *Node) ApplyStateMachine() {
-	//todo:...
-	logrus.Debug("...")
+	//todo: 应用到状态机
+	if n.CommitIndex > n.LastApplied {
+		n.LastApplied++
+		logrus.Debug("...", n.Log[n.LastApplied])
+	}
+
 }
 
 func (f *Follower) Join() error {
@@ -152,7 +156,10 @@ func (f *Follower) Join() error {
 //raft/rpc_server: implemented vote, after Follower change to Candidate then call to Nodes
 func (n *Node) RequestVote(ctx context.Context, in *rpc.VoteArguments) (result *rpc.VoteResults, err error) {
 
-	logrus.Warn("vvvvvvvvvvvvv")
+	logrus.Warn("Receive Candidate's RequestVote...")
+	//收到心跳重制timer
+	n.Timer.Reset(n.Timeout)
+	logrus.Warn("Reset Timer...")
 
 	result = &rpc.VoteResults{}
 	result.Term = n.CurrentTerm
