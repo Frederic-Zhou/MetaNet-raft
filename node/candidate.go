@@ -15,33 +15,32 @@ type Candidate = Node
 //raft/rpc_call: Start a vote
 func (c *Candidate) RequestVoteCall() bool {
 
-	c.CurrentTerm += 1 //当前任期自增
-	c.VotedCount = 1   //给自己投一票先
-	c.Timer.Reset(RandMillisecond())
+	c.CurrentTerm += 1               //当前任期自增
+	c.VotedCount = 1                 //先给自己记录一票
+	c.Timer.Reset(RandMillisecond()) //启动一个定时器
 
 	logrus.Infof("New term is %d \n", c.CurrentTerm)
 
 	for i, config := range c.NodesConfig {
-
-		//跳过请求自己
+		//排除自己
 		if config.ID == c.ID {
 			continue
 		}
-		//初始化所有节点的 nextIndex 为自己的Log最大index+1
 
+		//初始化所有节点的 nextIndex 为自己的Log最大index+1
 		c.NodesConfig[i].NextIndex = uint64(len(c.Log))
 		//向每一个节点发起链接，并 逐个推送条目
 		go c.connectAndVote(config)
 	}
 
 	for {
-
 		select {
 		case <-c.Timer.C:
 			return false
 		default:
+			// case <-time.After(10 * time.Millisecond):
 			//如果收到大多数服务器的选票，成为领导人
-			logrus.Infof("votedCount %d/%d", c.VotedCount, len(c.NodesConfig))
+			// logrus.Infof("votedCount %d/%d at %d \n", c.VotedCount, len(c.NodesConfig), c.CurrentTerm)
 			if c.VotedCount > uint(len(c.NodesConfig)/2) {
 				return true
 			}
@@ -86,7 +85,7 @@ func (c *Candidate) connectAndVote(cfg Config) {
 		return
 	}
 
-	logrus.Info(results)
+	logrus.Info("vote return:", results)
 	if results.VoteGranted {
 		c.VotedCount += 1
 	}
