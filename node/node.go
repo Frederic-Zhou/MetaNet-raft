@@ -102,6 +102,11 @@ func (n *Node) Become(role NodeRole) {
 		n.Timeout.Milliseconds())
 }
 
+func (n *Node) ApplyStateMachine() {
+	//todo:...
+	logrus.Debug("...")
+}
+
 func (f *Follower) Join() error {
 
 	//查找本地网络环境下的节点
@@ -153,17 +158,23 @@ func (n *Node) RequestVote(ctx context.Context, in *rpc.VoteArguments) (result *
 	result.Term = n.CurrentTerm
 	result.VoteGranted = false
 
+	//如果投票Term小于当前Term，返回 false
 	if in.Term < n.CurrentTerm {
 		return
 	}
 
 	lastIndex := len(n.Log) - 1
+	//如果VotedFor为空或者为CandidateID，并且候选人的日志至少和自己一样新，那么投票给他
 	if n.VotedFor == "" || n.VotedFor == in.CandidateID {
 		//至少一样新
 		if in.LastLogIndex >= uint64(lastIndex) && in.LastLogTerm >= n.Log[lastIndex].Term {
 			result.VoteGranted = true
+			n.VotedFor = in.CandidateID
 		}
 	}
+
+	//?????
+	//note: 什么时候清理掉VotedFor的数据呢 ？
 
 	return
 }

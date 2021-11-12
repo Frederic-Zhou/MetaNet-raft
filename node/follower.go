@@ -23,46 +23,56 @@ func (f *Follower) SetRandTimeOut() {
 
 //raft/rpc_server: implemented Log and hartbeat transfer, Learder call to Followers
 func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) (result *rpc.EntriesResults, err error) {
-	logrus.Warn("============")
-
+	logrus.Warn("Receive Leader's Append...")
 	//收到心跳重制timer
 	f.Heartbeat.Reset(f.Timeout)
-
-	logrus.Warn("+++++++")
+	logrus.Warn("Reset Timer...")
 
 	result = &rpc.EntriesResults{}
 	result.Term = f.CurrentTerm
 	result.Success = true
 
-	//如果当前轮大于Leader的轮，返回false
+	//如果领导人的任期小于接收者的当前任期（接受者为Follower和Candidate）
+	//note: 是否在这里判断的时候排出掉自己是Leader的情况???????
 	if in.Term < f.CurrentTerm {
 		result.Success = false
 		return
 	}
 
-	//???????????
-	f.CurrentRole = Role_Follower
-	//如果接收到的RPC请求或响应中，任期号大于当前任期号，则当前任期号改为接收到的任期号
-	f.CurrentTerm = in.Term
-	//???????????
+	// 所有服务器实现，如果接收到的RPC的 Term高于自己，那么更新自己的Term，并且切换为Follower
+	if in.Term > f.CurrentTerm {
+		f.Become(Role_Follower)
+		//如果接收到的RPC请求或响应中，任期号大于当前任期号，则当前任期号改为接收到的任期号
+		f.CurrentTerm = in.Term
+	}
 
 	//如果没有找到匹配PrevLogIndex和PrevLogTerm的，则返回false
+	//note: uint64(len(f.Log)-1) >= in.PrevLogIndex 这个条件主要是规避数组越界问题。Raft的要求 && 后的第二个判断即可满足
 	if !(uint64(len(f.Log)-1) >= in.PrevLogIndex && f.Log[in.PrevLogIndex].Term == in.PrevLogTerm) {
 		result.Success = false
 		return
 	}
-	//写入到Log中
+
+	//如果一个已经存在的条目和新条目冲突（索引相同，任期不同）删除该条目即之后的条目
+	if uint64(len(f.Log)-1) >= in.PrevLogIndex+1 && f.Log[in.PrevLogIndex].Term != in.PrevLogTerm {
+		f.Log = f.Log[:in.PrevLogIndex+1]
+	}
+
+	//追加日志中尚未存在的任何条目
 	f.Log = append(f.Log, in.GetEntries()...)
 
 	logrus.Info(f.Log)
 
 	//同步Leader的CommitIndex
+	//note: 有可能出现本节点是较慢的节点，Leader已经提交了较高的Index，但是本节点未必获得了领导的最高提交Index的日志
+	//因此，如果本节点的上一条日志高于leader Commited的日志，那么就用leader Commited的最高日志
+	//如果，Leader提交的最高日志比本节点上一次接受到的高，说明本节点还没有接收到leader提交的最高日志以及中间的日志，那么本节点的提交日志实用PrevLogIndex
 	if in.LeaderCommit > f.CommitIndex {
 
 		if in.PrevLogIndex < in.LeaderCommit {
 			f.CommitIndex = in.PrevLogIndex
 		} else {
-			f.CommitIndex = in.PrevLogIndex
+			f.CommitIndex = in.LeaderCommit
 		}
 
 	}
