@@ -3,3 +3,6 @@
 
 
 [raft动画演示](http://thesecretlivesofdata.com/raft/)
+
+rpc 生成
+`protoc -I ./rpc ./rpc/node.proto --go_out=plugins=grpc:rpc  `

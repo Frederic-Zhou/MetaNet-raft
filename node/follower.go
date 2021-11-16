@@ -78,6 +78,8 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 
 	}
 
+	f.LeaderID = in.LeaderID
+
 	return
 }
 

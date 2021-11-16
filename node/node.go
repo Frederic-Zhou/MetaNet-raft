@@ -6,32 +6,15 @@ import (
 	"fmt"
 	"metanet/rpc"
 	"net"
-	"strconv"
 	"time"
 
-	"github.com/gofrs/uuid"
 	"github.com/sirupsen/logrus"
-	"github.com/stefanwichmann/lanscan"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/peer"
 )
 
 func NewNode() (n *Node, err error) {
 
 	n = &Node{}
-
-	var id uuid.UUID
-
-	//创建ID
-	for {
-		id, err = uuid.NewV4()
-		if err == nil {
-			break
-		}
-	}
-
-	n.ID = id.String()
-
-	n.ID = strconv.Itoa(PORT) //测试
 
 	//先填充自己的网络资料配置
 	addrs, err := net.InterfaceAddrs()
@@ -42,12 +25,12 @@ func NewNode() (n *Node, err error) {
 		// 检查ip地址判断是否回环地址
 		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
 			if ipnet.IP.To4() != nil {
-				n.Config.Address = ipnet.IP.String()
+				n.Config.ID = ipnet.IP.String()
 			}
 		}
 	}
 
-	if n.Config.Address == "" {
+	if n.Config.ID == "" {
 		err = fmt.Errorf("no network")
 		return
 	}
@@ -67,7 +50,7 @@ func NewNode() (n *Node, err error) {
 	return
 }
 
-func (n *Node) Work() {
+func (n *Node) RaftWork() {
 	for {
 		switch n.CurrentRole {
 		case Role_Client:
@@ -102,48 +85,6 @@ func (n *Node) ApplyStateMachine() {
 		n.LastApplied++
 		logrus.Debug("...", n.Log[n.LastApplied])
 	}
-
-}
-
-func (f *Follower) Join() error {
-
-	//查找本地网络环境下的节点
-	hosts, err := lanscan.ScanLinkLocal("tcp4", PORT, 20, 5*time.Second)
-	if err != nil {
-		return err
-	}
-
-	//把自己的地址放最前面，先尝试连接自己
-	hosts = append([]string{f.Config.Address}, hosts...)
-
-	leaderAddr := ""
-	for _, host := range hosts {
-		if leaderAddr != "" {
-			host = leaderAddr
-		}
-
-		conn, err := grpc.Dial(fmt.Sprintf("%s:%d", host, PORT), grpc.WithInsecure())
-		if err != nil {
-			continue
-		}
-
-		nodeclient := rpc.NewNodeClient(conn)
-		//创建一个超时的context，在下面进行rpc请求的时候，通过这个超时context控制请求超时
-		ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
-		defer cancel()
-		result, err := nodeclient.ClientRequest(ctx, &rpc.ClientArguments{Data: []byte("join")})
-
-		if err != nil {
-			continue
-		}
-
-		if !result.Status && string(result.Data) != "" {
-			leaderAddr = string(result.Data)
-		}
-
-	}
-
-	return nil
 
 }
 
@@ -191,36 +132,53 @@ func (n *Node) RequestVote(ctx context.Context, in *rpc.VoteArguments) (result *
 }
 
 //MetaNet/rpc_server: implemented node Join or Split
-//the node need to input:
-//1. network address,include IP、 bluethooth
-//2. if the node first time Join to metanet, Node must input passphrase, and send publicKey to metanet
-//   if the node Rejoin to metanet, check the signtrue instead of input passphrase.
-//3. there are three action in Join function:
-//   a. join
-//	 b. rejoin
-//   c. split
-
 //*******************
 //all client or new node request package to ClientRequest,include Join, rejoin, split, datarequest, ....
 //all of this
 func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (result *rpc.ClientResults, err error) {
-
 	result = &rpc.ClientResults{}
+
+	//如果收到接入请求
 	if string(in.Data) == "join" {
-		result.Data = []byte{}
-		result.Status = false
+		//如果自己是Leader
 		if n.CurrentRole == Role_Leader {
-			result.Data = []byte("ok")
-			result.Status = true
-		} else {
-			for _, cfg := range n.NodesConfig {
-				if cfg.ID == n.LeaderID {
-					result.Data = []byte(cfg.Address)
-					result.Status = false
-					break
+
+			id := ""
+			if pr, ok := peer.FromContext(ctx); ok {
+				if tcpAddr, ok := pr.Addr.(*net.TCPAddr); ok {
+					id = tcpAddr.IP.String()
+				} else {
+					id = pr.Addr.String()
 				}
 			}
+
+			result.State = 1
+			result.Data = []byte(n.ID)
+			n.NodesConfig = append(n.NodesConfig, Config{
+				NextIndex: 1,
+				ID:        id,
+			})
+
+		} else {
+			result.State = 0
+			result.Data = []byte(n.LeaderID)
 		}
+
+		return
 	}
+
+	//如果自己不是Leader，转发给Leader
+	if n.CurrentRole != Role_Leader {
+		n.ClientRequestCall(in.Data)
+	}
+
+	entry := &rpc.Entry{
+		Term: n.CurrentTerm,
+		Data: in.Data,
+	}
+
+	//写入到日志中
+	n.Log = append(n.Log, entry)
+
 	return
 }

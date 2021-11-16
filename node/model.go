@@ -15,8 +15,8 @@ const (
 	Role_Candidate
 	Role_Leader
 
-	MinTimeout = 1500
-	MaxTimeout = 3000
+	MinTimeout = 150 * 10
+	MaxTimeout = 300 * 10
 )
 
 var PORT = 8800
@@ -24,9 +24,6 @@ var PORT = 8800
 type Config struct {
 	//Node ID
 	ID string
-
-	//Node network address
-	Address string
 
 	PrivateKey []byte
 	PublicKey  []byte

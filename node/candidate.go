@@ -53,7 +53,7 @@ func (c *Candidate) RequestVoteCall() bool {
 func (c *Candidate) connectAndVote(cfg Config) {
 
 	//链接各个节点
-	conn, err := grpc.Dial(cfg.Address, grpc.WithInsecure())
+	conn, err := grpc.Dial(cfg.ID, grpc.WithInsecure())
 
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
