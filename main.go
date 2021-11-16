@@ -38,6 +38,7 @@ func main() {
 	// n.NodesConfig = nodesConfig
 
 	//加入到当前环境下的网络
+	logrus.Info("尝试JOIN")
 	if id, err := n.Join(); err != nil && id != "" {
 		//如果加入失败,保存可发送请求的ID
 		n.Become(node.Role_Client)

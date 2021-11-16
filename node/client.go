@@ -7,6 +7,7 @@ import (
 	"metanet/rpc"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stefanwichmann/lanscan"
 	"google.golang.org/grpc"
 )
@@ -36,6 +37,7 @@ func (c *Client) Join() (string, error) {
 
 	//查找本地网络环境下的节点
 	hosts, err := lanscan.ScanLinkLocal("tcp4", PORT, 20, 5*time.Second)
+	logrus.Info(hosts, err)
 	if err != nil {
 		return "", err
 	}
@@ -59,15 +61,17 @@ func (c *Client) Join() (string, error) {
 		defer cancel()
 		result, err := nodeclient.ClientRequest(ctx, &rpc.ClientArguments{Data: []byte("join")})
 
+		logrus.Info("Join ", host, err)
 		//如果发生网络错误，说明该地址下没有启动节点。
 		if err != nil {
+			//如果leaderID 是存在的，说明此节点无法链接Leader，直接跳出
 			if leaderID != "" {
 				break
 			}
 			continue
 		}
 
-		//找到的是follower节点
+		//找到的是follower节点，返回leaderID ,下一次连接尝试链接Leader
 		if result.State == 0 {
 			leaderID = string(result.Data)
 			lastNodeID = host

@@ -167,9 +167,10 @@ func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (resu
 		return
 	}
 
-	//如果自己不是Leader，转发给Leader
+	//如果自己不是Leader，调用自己的请求，转发给Leader，这种情况出现在当客户端不是节点，请求到一个不是Leader的节点时
+	//不是Leader的节点用自己的请求函数去请求Leader
 	if n.CurrentRole != Role_Leader {
-		n.ClientRequestCall(in.Data)
+		return n.ClientRequestCall(in.Data)
 	}
 
 	entry := &rpc.Entry{
@@ -180,5 +181,6 @@ func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (resu
 	//写入到日志中
 	n.Log = append(n.Log, entry)
 
+	result.State = 1
 	return
 }
