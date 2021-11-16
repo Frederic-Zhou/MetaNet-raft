@@ -34,9 +34,10 @@ func (c *Client) ClientRequestCall(cmd []byte) (result *rpc.ClientResults, err e
 }
 
 func (c *Client) Join() (string, error) {
+	//var validNetworks = []string{"tcp", "tcp4", "tcp6", "udp", "udp4", "udp6", "ip", "ip4", "ip6", "unix", "unixgram", "unixpacket"}
 
 	//查找本地网络环境下的节点
-	hosts, err := lanscan.ScanLinkLocal("tcp4", PORT, 20, 5*time.Second)
+	hosts, err := lanscan.ScanLinkLocal("tcp", PORT, 20, 5*time.Second)
 	logrus.Info(hosts, err)
 	if err != nil {
 		return "", err
@@ -61,7 +62,7 @@ func (c *Client) Join() (string, error) {
 		defer cancel()
 		result, err := nodeclient.ClientRequest(ctx, &rpc.ClientArguments{Data: []byte("join")})
 
-		logrus.Info("Join ", host, err)
+		logrus.Info("Join ", host, err, result)
 		//如果发生网络错误，说明该地址下没有启动节点。
 		if err != nil {
 			//如果leaderID 是存在的，说明此节点无法链接Leader，直接跳出
@@ -78,9 +79,9 @@ func (c *Client) Join() (string, error) {
 			continue
 		}
 
-		//找到了Leader，并已经成功加入
+		//找到了Leader，并已经成功加入, Leader返回本节点ID（IP 地址）
 		if result.State == 1 {
-			return leaderID, nil
+			return string(result.Data), nil
 		}
 	}
 

@@ -41,15 +41,16 @@ func main() {
 	logrus.Info("尝试JOIN")
 	if id, err := n.Join(); err != nil && id != "" {
 		//如果加入失败,保存可发送请求的ID
+		//不启动节点功能
 		n.Become(node.Role_Client)
 		n.LeaderID = id
 
 	} else {
-		//开启监听
+		//开启监听，并启动节点功能
 		go n.RpcServerStart()
 		time.Sleep(3 * time.Second)
 		n.Become(node.Role_Follower)
-		n.RaftWork()
+		n.NodeWork()
 	}
 
 }

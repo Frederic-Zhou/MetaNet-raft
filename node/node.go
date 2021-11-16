@@ -50,7 +50,7 @@ func NewNode() (n *Node, err error) {
 	return
 }
 
-func (n *Node) RaftWork() {
+func (n *Node) NodeWork() {
 	for {
 		switch n.CurrentRole {
 		case Role_Client:
@@ -140,6 +140,7 @@ func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (resu
 
 	//如果收到接入请求
 	if string(in.Data) == "join" {
+
 		//如果自己是Leader
 		if n.CurrentRole == Role_Leader {
 
@@ -154,11 +155,12 @@ func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (resu
 
 			result.State = 1
 			result.Data = []byte(n.ID)
-			n.NodesConfig = append(n.NodesConfig, Config{
-				NextIndex: 1,
-				ID:        id,
-			})
 
+			cfg := Config{NextIndex: 1, ID: id}
+			n.NodesConfig = append(n.NodesConfig, cfg)
+
+			logrus.Warn("new node join", n.NodesConfig)
+			go n.connectAndAppend(&cfg)
 		} else {
 			result.State = 0
 			result.Data = []byte(n.LeaderID)
