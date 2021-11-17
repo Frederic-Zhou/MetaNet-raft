@@ -143,7 +143,6 @@ func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (resu
 
 		//如果自己是Leader
 		if n.CurrentRole == Role_Leader {
-
 			id := ""
 			if pr, ok := peer.FromContext(ctx); ok {
 				if tcpAddr, ok := pr.Addr.(*net.TCPAddr); ok {

@@ -45,6 +45,7 @@ func (c *Client) Join() (string, error) {
 
 	leaderID := ""
 	lastNodeID := ""
+
 	//轮训所有可连接地址
 	for _, host := range hosts {
 		if leaderID != "" {
