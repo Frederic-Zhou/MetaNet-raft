@@ -123,12 +123,13 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 
 		eArguments := &rpc.EntriesArguments{
 			Term:         l.CurrentTerm,
-			LeaderID:     l.ID, //可以去掉
 			PrevLogIndex: nextIndex - 1,
 			PrevLogTerm:  l.Log[nextIndex-1].Term,
 			Entries:      entries,
 			LeaderCommit: l.CommitIndex,
 		}
+
+		logrus.Info("eargs : prevlogIndex: %v, prelogTerm: %v", eArguments.PrevLogIndex, eArguments.PrevLogTerm)
 
 		//创建一个超时的context，在下面进行rpc请求的时候，通过这个超时context控制请求超时
 		ctx, cancel := context.WithTimeout(context.Background(), MinTimeout*time.Millisecond)
