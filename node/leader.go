@@ -118,7 +118,7 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 		entries := []*rpc.Entry{}
 		//对于跟随者，最后日志条目的索引大于等于nextIndex
 		if nextIndex <= lastIndex {
-			entries = l.Log[nextIndex:lastIndex]
+			entries = l.Log[nextIndex : lastIndex+1]
 		}
 
 		eArguments := &rpc.EntriesArguments{
