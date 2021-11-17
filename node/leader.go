@@ -29,17 +29,17 @@ func (l *Leader) AppendEntriesCall() {
 
 	//如果不存在，就添加到配置表
 	if needAddPreLeaderID {
-		l.NodesConfig = append(l.NodesConfig, Config{ID: l.LeaderID, NextIndex: 1})
+		l.NodesConfig = append(l.NodesConfig, &Config{ID: l.LeaderID, NextIndex: 1})
 	}
 	//===========================
 
 	// 读取出所有的节点配置地址
-	for i := range l.NodesConfig {
+	for _, cfg := range l.NodesConfig {
 
 		//初始化所有节点的 nextIndex 为自己的Log最大index+1
-		l.NodesConfig[i].NextIndex = uint64(len(l.Log))
+		cfg.NextIndex = uint64(len(l.Log))
 		//向每一个节点发起链接，并 逐个推送条目
-		go l.connectAndAppend(&l.NodesConfig[i])
+		go l.connectAndAppend(cfg)
 	}
 	// 检查全部Node的matchIndex ，如果大多数相同，那么,认为提交的数据成立
 	for {
@@ -49,14 +49,7 @@ func (l *Leader) AppendEntriesCall() {
 		}
 
 		// logrus.Infof("all nodes count is %d", len(l.MatchIndex))
-		for i, config := range l.NodesConfig {
-
-			//检查有没有新增的节点配置
-			//如果有，发起链接和心跳
-			if config.NextIndex == 0 {
-				l.NodesConfig[i].NextIndex = 1
-				go l.connectAndAppend(&l.NodesConfig[i])
-			}
+		for _, config := range l.NodesConfig {
 
 			//假设存在N
 			//这个N，从节点的matchIndex中找。（这个方法是本人自己设计，而非Raft定义，Raft中没有明确定义这个N的来源）
@@ -86,7 +79,7 @@ func (l *Leader) AppendEntriesCall() {
 
 func (l *Leader) connectAndAppend(cfg *Config) {
 
-	logrus.Warn(cfg)
+	logrus.Warn("connect to ", cfg.ID)
 
 	//不用发给自己
 	if cfg.ID == l.ID {
@@ -162,4 +155,18 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 
 		time.Sleep(time.Millisecond * MinTimeout / 3) //1/3个最小超时时间发送一次
 	}
+}
+
+func (l *Leader) newNodes() {
+
+	//检查有没有新增的节点配置
+	//如果有，发起链接和心跳
+
+	for id := range l.newNodeChan {
+		newCfg := &Config{ID: id, NextIndex: 1}
+		l.NodesConfig = append(l.NodesConfig, newCfg)
+
+		go l.connectAndAppend(newCfg)
+	}
+
 }

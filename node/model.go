@@ -90,7 +90,9 @@ type Node struct {
 	Config
 
 	//other known nodes configs
-	NodesConfig []Config
+	NodesConfig []*Config
 
 	Timer *time.Timer
+
+	newNodeChan chan string
 }

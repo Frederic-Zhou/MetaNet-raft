@@ -25,6 +25,7 @@ func NewNode() (n *Node, err error) {
 	}
 
 	n.Timer = time.NewTimer(RandMillisecond())
+	n.newNodeChan = make(chan string, 20)
 
 	return
 }
@@ -122,6 +123,10 @@ func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (resu
 
 		//如果自己是Leader
 		if n.CurrentRole == Role_Leader {
+
+			//1 表示是Leader加入成功
+			result.State = 1
+			//拿到请求加入节点的地址作为ID
 			id := ""
 			if pr, ok := peer.FromContext(ctx); ok {
 				if tcpAddr, ok := pr.Addr.(*net.TCPAddr); ok {
@@ -130,12 +135,13 @@ func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (resu
 					id = pr.Addr.String()
 				}
 			}
-			result.State = 1
-			cfg := Config{NextIndex: 0, ID: id}
-			n.NodesConfig = append(n.NodesConfig, cfg)
+
+			//更新到节点配置中
+			n.newNodeChan <- id
 			logrus.Warn("new node join", n.NodesConfig)
 
 		} else {
+			//0表示自己是节点
 			result.State = 0
 		}
 

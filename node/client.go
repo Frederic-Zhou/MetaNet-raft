@@ -8,6 +8,7 @@ import (
 	"metanet/rpc"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
 
@@ -41,17 +42,47 @@ func (c *Client) Join() (leaderID string, fastNodeID string) {
 		allIPs = append(allIPs, network.CalculateSubnetIPs(current)...)
 	}
 
-	leaderChan := make(chan string)
-	nodeChan := make(chan string)
+	count := len(allIPs)
+
+	hostchan := make(chan string, count)
+	resultchan := make(chan []string, count)
+	//创建n个联络员
+	n := 100
+	for i := 0; i < n; i++ {
+		go liaison(hostchan, resultchan)
+	}
 
 	//轮训所有可连接地址
 	for _, host := range allIPs {
+		hostchan <- host
+	}
 
-		go func(host string) {
+	close(hostchan)
 
+	for i := 0; i < count; i++ {
+		result := <-resultchan
+		logrus.Info(result)
+		if result[0] == "leader" {
+			leaderID = result[1]
+			return
+		} else if result[0] == "follower" {
+			if fastNodeID == "" {
+				fastNodeID = result[1]
+			}
+		}
+	}
+
+	return
+}
+
+func liaison(hostchan chan string, resultchan chan []string) {
+
+	for host := range hostchan {
+
+		func() {
 			conn, err := grpc.Dial(fmt.Sprintf("%s:%d", host, PORT), grpc.WithInsecure())
 			if err != nil {
-				nodeChan <- ""
+				resultchan <- []string{"", host}
 				return
 			}
 			defer conn.Close()
@@ -62,40 +93,19 @@ func (c *Client) Join() (leaderID string, fastNodeID string) {
 			result, err := nodeclient.ClientRequest(ctx, &rpc.ClientArguments{Data: []byte("join")})
 			//如果发生网络错误，说明该地址下没有启动节点。
 			if err != nil {
-				nodeChan <- ""
+				resultchan <- []string{"", host}
 				return
 			}
 
 			switch result.State {
 			case 0: //follower
-				nodeChan <- host
+				resultchan <- []string{"follower", host}
 			case 1: //leader
-				leaderChan <- host
+				resultchan <- []string{"leader", host}
 			default:
 			}
+		}()
 
-		}(host)
-
-	}
-
-	count := len(allIPs)
-	for {
-		select {
-		case id := <-nodeChan:
-			if fastNodeID == "" && id != "" {
-				fastNodeID = id
-			}
-
-			count -= 1
-
-			if count == 0 {
-				return
-			}
-
-		case id := <-leaderChan:
-			leaderID = id
-			return
-		}
 	}
 
 }
