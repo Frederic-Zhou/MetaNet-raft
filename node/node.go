@@ -68,7 +68,7 @@ func (n *Node) ApplyStateMachine() {
 		// logrus.Info("read log", n.CommitIndex, n.LastApplied)
 		if n.CommitIndex > n.LastApplied {
 			n.LastApplied++
-			logrus.Info("...", n.Log[n.LastApplied])
+			logrus.Info("Applied StateMachine:", n.Log[n.LastApplied])
 		}
 	}
 
@@ -165,7 +165,6 @@ func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (resu
 		Data: in.Data,
 	}
 
-	logrus.Info("write log")
 	//写入到日志中
 	n.Log = append(n.Log, entry)
 
