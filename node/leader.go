@@ -54,6 +54,7 @@ func (l *Leader) AppendEntriesCall() {
 			//检查有没有新增的节点配置
 			//如果有，发起链接和心跳
 			if config.NextIndex == 0 {
+				l.NodesConfig[i].NextIndex = 1
 				go l.connectAndAppend(&l.NodesConfig[i])
 			}
 
