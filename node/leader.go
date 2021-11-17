@@ -18,7 +18,8 @@ type Leader = Node
 //raft/rpc_call:一旦成为领导人，立即发送日志
 func (l *Leader) AppendEntriesCall() {
 
-	//上一届Leader是否存在于配置表
+	//当配置不为空的时候，如果上届leader ID不存在于配置列表，那么就添加
+	//note:也就是不是第一个原始Leader时（原始Leader不是从follower转变的，所以leaderid一定是空，不能添加到配置列表中）
 	needAddPreLeaderID := len(l.NodesConfig) > 0
 	for _, cfg := range l.NodesConfig {
 		if cfg.ID == l.LeaderID {
