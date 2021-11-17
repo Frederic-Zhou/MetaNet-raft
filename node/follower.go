@@ -11,6 +11,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -78,7 +79,14 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 
 	}
 
-	f.LeaderID = in.LeaderID
+	// f.LeaderID = in.LeaderID
+	if pr, ok := peer.FromContext(ctx); ok {
+		if tcpAddr, ok := pr.Addr.(*net.TCPAddr); ok {
+			f.LeaderID = tcpAddr.IP.String()
+		} else {
+			f.LeaderID = pr.Addr.String()
+		}
+	}
 
 	return
 }

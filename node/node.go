@@ -3,8 +3,6 @@ package node
 
 import (
 	context "context"
-	"fmt"
-	"metanet/network"
 	"metanet/rpc"
 	"net"
 	"time"
@@ -25,13 +23,6 @@ func NewNode() (n *Node, err error) {
 			Data: []byte{},
 		},
 	}
-
-	ips := network.LinkLocalAddresses("tcp4")
-	if len(ips) != 1 {
-		return nil, fmt.Errorf("网络错误 %v", ips)
-	}
-
-	n.ID = ips[0]
 
 	n.Timer = time.NewTimer(RandMillisecond())
 

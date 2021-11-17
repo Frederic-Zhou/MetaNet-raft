@@ -17,6 +17,20 @@ type Leader = Node
 //raft/rpc_call:一旦成为领导人，立即发送日志
 func (l *Leader) AppendEntriesCall() {
 
+	//上一届Leader是否存在于配置表
+	needAddPreLeaderID := true
+	for _, cfg := range l.NodesConfig {
+		if cfg.ID == l.LeaderID {
+			needAddPreLeaderID = false
+			break
+		}
+	}
+
+	//如果不存在，就添加到配置表
+	if needAddPreLeaderID {
+		l.NodesConfig = append(l.NodesConfig, Config{ID: l.LeaderID, NextIndex: 1})
+	}
+
 	// 读取出所有的节点配置地址
 	for i := range l.NodesConfig {
 
