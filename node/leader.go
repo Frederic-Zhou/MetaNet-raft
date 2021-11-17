@@ -112,7 +112,7 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 		nextIndex := cfg.NextIndex
 		lastIndex := uint64(len(l.Log) - 1)
 
-		logrus.Info("log len", len(l.Log), nextIndex)
+		logrus.Infof("leaderLogLen %v,nextIndex:%v, lastIndex:%v", len(l.Log), nextIndex, lastIndex)
 
 		//对于Follower 追加日志中尚未写入的所有条目
 		entries := []*rpc.Entry{}
@@ -140,7 +140,7 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 			continue
 		}
 
-		logrus.Info("Append:", results)
+		logrus.Infof("Append: term: %v,success: %v", results.Term, results.Success)
 
 		//如果收到的Term大于当前轮，成为
 		if results.Term > l.CurrentTerm {
