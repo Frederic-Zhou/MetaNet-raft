@@ -2,6 +2,7 @@ package node
 
 import (
 	context "context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -51,6 +52,9 @@ func (l *Leader) AppendEntriesCall() {
 			//如果不再是Learder 退出
 			return
 		}
+
+		body, _ := json.Marshal(l.NodesConfig)
+		logrus.Info(string(body))
 
 		// logrus.Infof("all nodes count is %d", len(l.MatchIndex))
 		for _, config := range l.NodesConfig {
