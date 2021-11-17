@@ -4,6 +4,7 @@ import (
 	context "context"
 	"fmt"
 	"math/rand"
+	"metanet/network"
 	"metanet/rpc"
 	"net"
 	"os"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -83,13 +83,7 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 
 	// f.LeaderID = in.LeaderID
 	// 动态节点，将发心跳过来的IP 作为 LeaderID
-	if pr, ok := peer.FromContext(ctx); ok {
-		if tcpAddr, ok := pr.Addr.(*net.TCPAddr); ok {
-			f.LeaderID = tcpAddr.IP.String()
-		} else {
-			f.LeaderID = pr.Addr.String()
-		}
-	}
+	f.LeaderID = network.GetGrpcClientIP(ctx)
 
 	return
 }

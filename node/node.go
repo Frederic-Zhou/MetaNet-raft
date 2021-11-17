@@ -4,12 +4,11 @@ package node
 import (
 	context "context"
 	"encoding/json"
+	"metanet/network"
 	"metanet/rpc"
-	"net"
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"google.golang.org/grpc/peer"
 )
 
 func NewNode() (n *Node, err error) {
@@ -127,21 +126,13 @@ func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (resu
 
 	//如果收到接入请求
 	if string(in.Data) == "join" {
-
 		//如果自己是Leader
 		if n.CurrentRole == Role_Leader {
 
 			//1 表示是Leader加入成功
 			result.State = 1
 			//拿到请求加入节点的地址作为ID
-			id := ""
-			if pr, ok := peer.FromContext(ctx); ok {
-				if tcpAddr, ok := pr.Addr.(*net.TCPAddr); ok {
-					id = tcpAddr.IP.String()
-				} else {
-					id = pr.Addr.String()
-				}
-			}
+			id := network.GetGrpcClientIP(ctx)
 
 			//更新到节点配置中
 			n.newNodeChan <- id
@@ -151,7 +142,6 @@ func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (resu
 			//0表示自己是节点
 			result.State = 0
 		}
-
 		return
 	}
 

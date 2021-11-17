@@ -24,8 +24,11 @@
 package network
 
 import (
+	"context"
 	"net"
 	"strings"
+
+	"google.golang.org/grpc/peer"
 )
 
 var linkLocalCIDR = []string{
@@ -118,4 +121,16 @@ func inc(ip net.IP) {
 			break
 		}
 	}
+}
+
+func GetGrpcClientIP(ctx context.Context) (ip string) {
+	if pr, ok := peer.FromContext(ctx); ok {
+		if tcpAddr, ok := pr.Addr.(*net.TCPAddr); ok {
+			ip = tcpAddr.IP.String()
+		} else {
+			ip = pr.Addr.String()
+		}
+	}
+
+	return
 }
