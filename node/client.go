@@ -17,8 +17,7 @@ type Client = Node
 func (c *Client) ClientRequestCall(cmd []byte) (result *rpc.ClientResults, err error) {
 
 	//链接到节点
-
-	conn, err := grpc.Dial(c.LeaderID, grpc.WithInsecure())
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", c.LeaderID, PORT), grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 		return
@@ -30,7 +29,9 @@ func (c *Client) ClientRequestCall(cmd []byte) (result *rpc.ClientResults, err e
 	ctx, cancel := context.WithTimeout(context.Background(), MinTimeout*time.Millisecond)
 	defer cancel()
 
-	return nodeclient.ClientRequest(ctx, &rpc.ClientArguments{Data: cmd})
+	result, err = nodeclient.ClientRequest(ctx, &rpc.ClientArguments{Data: cmd})
+
+	return
 }
 
 func (c *Client) Join() (leaderID string, fastNodeID string) {

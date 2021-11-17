@@ -14,6 +14,8 @@ import (
 func NewNode() (n *Node, err error) {
 
 	n = &Node{}
+
+	//todo: 生成私钥
 	n.Config.PrivateKey = []byte{}
 	n.Config.PublicKey = []byte{}
 
@@ -31,6 +33,7 @@ func NewNode() (n *Node, err error) {
 }
 
 func (n *Node) NodeWork() {
+
 	for {
 		switch n.CurrentRole {
 		case Role_Client:
@@ -60,10 +63,13 @@ func (n *Node) Become(role NodeRole) {
 }
 
 func (n *Node) ApplyStateMachine() {
-	//todo: 应用到状态机
-	if n.CommitIndex > n.LastApplied {
-		n.LastApplied++
-		logrus.Debug("...", n.Log[n.LastApplied])
+	//todo: 应用到状态机，目前简单的线打印出来做调试
+	for {
+		// logrus.Info("read log", n.CommitIndex, n.LastApplied)
+		if n.CommitIndex > n.LastApplied {
+			n.LastApplied++
+			logrus.Info("...", n.Log[n.LastApplied])
+		}
 	}
 
 }
@@ -159,6 +165,7 @@ func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (resu
 		Data: in.Data,
 	}
 
+	logrus.Info("write log")
 	//写入到日志中
 	n.Log = append(n.Log, entry)
 

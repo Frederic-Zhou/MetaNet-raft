@@ -31,6 +31,7 @@ func (l *Leader) AppendEntriesCall() {
 	if needAddPreLeaderID {
 		l.NodesConfig = append(l.NodesConfig, &Config{ID: l.LeaderID, NextIndex: 1})
 	}
+
 	//===========================
 
 	//等待迎接新节点加入
@@ -111,7 +112,7 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 		nextIndex := cfg.NextIndex
 		lastIndex := uint64(len(l.Log) - 1)
 
-		logrus.Debug("log len", len(l.Log), nextIndex)
+		logrus.Info("log len", len(l.Log), nextIndex)
 
 		//对于Follower 追加日志中尚未写入的所有条目
 		entries := []*rpc.Entry{}
