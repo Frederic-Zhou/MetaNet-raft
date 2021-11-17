@@ -138,7 +138,7 @@ func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (resu
 
 			//更新到节点配置中
 			n.newNodeChan <- id
-			logrus.Warn("new node join", n.NodesConfig)
+			logrus.Warn("new node join:", id)
 
 		} else {
 			//0表示自己是节点

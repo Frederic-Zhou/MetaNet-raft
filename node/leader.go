@@ -33,6 +33,9 @@ func (l *Leader) AppendEntriesCall() {
 	}
 	//===========================
 
+	//等待迎接新节点加入
+	go l.receptionNewNodes()
+
 	// 读取出所有的节点配置地址
 	for _, cfg := range l.NodesConfig {
 
@@ -157,7 +160,7 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 	}
 }
 
-func (l *Leader) newNodes() {
+func (l *Leader) receptionNewNodes() {
 
 	//检查有没有新增的节点配置
 	//如果有，发起链接和心跳
