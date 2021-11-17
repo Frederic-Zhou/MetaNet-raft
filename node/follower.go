@@ -34,7 +34,7 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 	result.Success = true
 
 	//如果领导人的任期小于接收者的当前任期（接受者为Follower和Candidate）
-	//note: 是否在这里判断的时候排出掉自己是Leader的情况???????
+	//note: 是否在这里判断的时候排出掉自己是Leader的情况????(Leader并不会给自己发送消息)
 	if in.Term < f.CurrentTerm {
 		result.Success = false
 		return
