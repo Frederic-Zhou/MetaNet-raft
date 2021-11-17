@@ -65,7 +65,7 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 	}
 
 	//追加日志中尚未存在的任何条目
-	f.Log = append(f.Log, in.GetEntries()...)
+	f.Log = append(f.Log, in.Entries...)
 
 	logrus.Info("write log", f.Log)
 

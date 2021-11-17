@@ -129,7 +129,7 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 			LeaderCommit: l.CommitIndex,
 		}
 
-		logrus.Infof("eargs : prevlogIndex: %v, prelogTerm: %v", eArguments.PrevLogIndex, eArguments.PrevLogTerm)
+		logrus.Infof("eargs : prevlogIndex: %v, prelogTerm: %v , entries: %v", eArguments.PrevLogIndex, eArguments.PrevLogTerm, entries)
 
 		//创建一个超时的context，在下面进行rpc请求的时候，通过这个超时context控制请求超时
 		ctx, cancel := context.WithTimeout(context.Background(), MinTimeout*time.Millisecond)
