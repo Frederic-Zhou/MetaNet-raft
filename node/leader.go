@@ -2,6 +2,7 @@ package node
 
 import (
 	context "context"
+	"fmt"
 	"log"
 	"time"
 
@@ -30,6 +31,7 @@ func (l *Leader) AppendEntriesCall() {
 	if needAddPreLeaderID {
 		l.NodesConfig = append(l.NodesConfig, Config{ID: l.LeaderID, NextIndex: 1})
 	}
+	//===========================
 
 	// 读取出所有的节点配置地址
 	for i := range l.NodesConfig {
@@ -47,7 +49,13 @@ func (l *Leader) AppendEntriesCall() {
 		}
 
 		// logrus.Infof("all nodes count is %d", len(l.MatchIndex))
-		for _, config := range l.NodesConfig {
+		for i, config := range l.NodesConfig {
+
+			//检查有没有新增的节点配置
+			//如果有，发起链接和心跳
+			if config.NextIndex == 0 {
+				go l.connectAndAppend(&l.NodesConfig[i])
+			}
 
 			//假设存在N
 			//这个N，从节点的matchIndex中找。（这个方法是本人自己设计，而非Raft定义，Raft中没有明确定义这个N的来源）
@@ -84,7 +92,7 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 		return
 	}
 	//链接各个节点
-	conn, err := grpc.Dial(cfg.ID, grpc.WithInsecure())
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", cfg.ID, PORT), grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 		return
@@ -106,6 +114,8 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 		nextIndex := cfg.NextIndex
 		lastIndex := uint64(len(l.Log) - 1)
 
+		logrus.Debug("log len", len(l.Log), nextIndex)
+
 		//对于Follower 追加日志中尚未写入的所有条目
 		entries := []*rpc.Entry{}
 		//对于跟随者，最后日志条目的索引大于等于nextIndex
@@ -115,7 +125,7 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 
 		eArguments := &rpc.EntriesArguments{
 			Term:         l.CurrentTerm,
-			LeaderID:     l.ID,
+			LeaderID:     l.ID, //可以去掉
 			PrevLogIndex: nextIndex - 1,
 			PrevLogTerm:  l.Log[nextIndex-1].Term,
 			Entries:      entries,
@@ -127,8 +137,8 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 		defer cancel()
 		results, err := nodeclient.AppendEntries(ctx, eArguments)
 		if err != nil {
-			logrus.Errorf("AppendEntries err:%v \n", cfg.ID) // err)
-			time.Sleep(time.Millisecond * MinTimeout / 3)    //1/3个最小超时时间发送一次
+			logrus.Errorf("AppendEntries err:%v %v\n", cfg.ID, err) // err)
+			time.Sleep(time.Millisecond * MinTimeout / 3)           //1/3个最小超时时间发送一次
 			continue
 		}
 

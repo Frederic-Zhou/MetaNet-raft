@@ -130,18 +130,13 @@ func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (resu
 					id = pr.Addr.String()
 				}
 			}
-
 			result.State = 1
-			result.Data = []byte(n.ID)
-
-			cfg := Config{NextIndex: 1, ID: id}
+			cfg := Config{NextIndex: 0, ID: id}
 			n.NodesConfig = append(n.NodesConfig, cfg)
-
 			logrus.Warn("new node join", n.NodesConfig)
-			go n.connectAndAppend(&cfg)
+
 		} else {
 			result.State = 0
-			result.Data = []byte(n.LeaderID)
 		}
 
 		return

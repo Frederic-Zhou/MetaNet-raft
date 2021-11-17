@@ -17,18 +17,20 @@ func main() {
 
 	//加入到当前环境下的网络
 	logrus.Info("尝试JOIN")
-	if id, err := n.Join(); err != nil && id != "" {
-		//如果加入失败,保存可发送请求的ID
-		//不启动节点功能
-		n.Become(node.Role_Client)
-		n.LeaderID = id
+	lid, fid := n.Join()
 
-	} else {
-		//开启监听，并启动节点功能
-		go n.RpcServerStart()
-		time.Sleep(3 * time.Second)
-		n.Become(node.Role_Follower)
-		n.NodeWork()
+	if lid == "" && fid != "" {
+		n.Become(node.Role_Client)
+		n.LeaderID = fid
 	}
+
+	if lid == "" {
+		logrus.Info("No Leader ... create net")
+	}
+
+	go n.RpcServerStart()
+	time.Sleep(3 * time.Second)
+	n.Become(node.Role_Follower)
+	n.NodeWork()
 
 }

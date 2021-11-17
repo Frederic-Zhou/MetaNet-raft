@@ -8,7 +8,6 @@ import (
 	"metanet/rpc"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
 
@@ -33,7 +32,7 @@ func (c *Client) ClientRequestCall(cmd []byte) (result *rpc.ClientResults, err e
 	return nodeclient.ClientRequest(ctx, &rpc.ClientArguments{Data: cmd})
 }
 
-func (c *Client) Join() (string, error) {
+func (c *Client) Join() (leaderID string, fastNodeID string) {
 	//var validNetworks = []string{"tcp", "tcp4", "tcp6", "udp", "udp4", "udp6", "ip", "ip4", "ip6", "unix", "unixgram", "unixpacket"}
 
 	//得到所有tcp4的网卡的网络环境的IP列表（理论列表）
@@ -42,48 +41,61 @@ func (c *Client) Join() (string, error) {
 		allIPs = append(allIPs, network.CalculateSubnetIPs(current)...)
 	}
 
-	leaderID := ""
-	lastNodeID := ""
+	leaderChan := make(chan string)
+	nodeChan := make(chan string)
+
 	//轮训所有可连接地址
 	for _, host := range allIPs {
-		if leaderID != "" {
-			host = leaderID
-		}
-		logrus.Info("try:", host)
-		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
-		defer cancel()
-		conn, err := grpc.DialContext(ctx, fmt.Sprintf("%s:%d", host, PORT), grpc.WithBlock(), grpc.WithInsecure())
-		if err != nil {
-			continue
-		}
 
-		nodeclient := rpc.NewNodeClient(conn)
+		go func(host string) {
 
-		result, err := nodeclient.ClientRequest(ctx, &rpc.ClientArguments{Data: []byte("join")})
-
-		logrus.Info("Join ", host, err, result)
-		//如果发生网络错误，说明该地址下没有启动节点。
-		if err != nil {
-			//如果leaderID 是存在的，说明此节点无法链接Leader，直接跳出
-			if leaderID != "" {
-				break
+			conn, err := grpc.Dial(fmt.Sprintf("%s:%d", host, PORT), grpc.WithInsecure())
+			if err != nil {
+				nodeChan <- ""
+				return
 			}
-			continue
-		}
+			defer conn.Close()
 
-		//找到的是follower节点，返回leaderID ,下一次连接尝试链接Leader
-		if result.State == 0 {
-			leaderID = string(result.Data)
-			lastNodeID = host
-			continue
-		}
+			nodeclient := rpc.NewNodeClient(conn)
+			ctx, cancel := context.WithTimeout(context.Background(), MaxTimeout*time.Millisecond)
+			defer cancel()
+			result, err := nodeclient.ClientRequest(ctx, &rpc.ClientArguments{Data: []byte("join")})
+			//如果发生网络错误，说明该地址下没有启动节点。
+			if err != nil {
+				nodeChan <- ""
+				return
+			}
 
-		//找到了Leader，并已经成功加入, Leader返回本节点ID（IP 地址）
-		if result.State == 1 {
-			return string(result.Data), nil
-		}
+			switch result.State {
+			case 0: //follower
+				nodeChan <- host
+			case 1: //leader
+				leaderChan <- host
+			default:
+			}
+
+		}(host)
+
 	}
 
-	return lastNodeID, fmt.Errorf("join fail")
+	count := len(allIPs)
+	for {
+		select {
+		case id := <-nodeChan:
+			if fastNodeID == "" && id != "" {
+				fastNodeID = id
+			}
+
+			count -= 1
+
+			if count == 0 {
+				return
+			}
+
+		case id := <-leaderChan:
+			leaderID = id
+			return
+		}
+	}
 
 }

@@ -2,6 +2,7 @@ package node
 
 import (
 	context "context"
+	"fmt"
 	"log"
 	"metanet/rpc"
 	"time"
@@ -53,7 +54,7 @@ func (c *Candidate) RequestVoteCall() bool {
 func (c *Candidate) connectAndVote(cfg Config) {
 
 	//链接各个节点
-	conn, err := grpc.Dial(cfg.ID, grpc.WithInsecure())
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", cfg.ID, PORT), grpc.WithInsecure())
 
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)

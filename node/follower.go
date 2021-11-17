@@ -80,6 +80,7 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 	}
 
 	// f.LeaderID = in.LeaderID
+	// 动态节点，将发心跳过来的IP 作为 LeaderID
 	if pr, ok := peer.FromContext(ctx); ok {
 		if tcpAddr, ok := pr.Addr.(*net.TCPAddr); ok {
 			f.LeaderID = tcpAddr.IP.String()
