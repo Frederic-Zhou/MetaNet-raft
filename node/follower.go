@@ -52,9 +52,9 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 	//note: uint64(len(f.Log)-1) >= in.PrevLogIndex 这个条件主要是规避数组越界问题。Raft的要求 && 后的第二个判断即可满足
 	if !(uint64(len(f.Log)-1) >= in.PrevLogIndex && f.Log[in.PrevLogIndex].Term == in.PrevLogTerm) {
 		logrus.Errorf("in.PrevLogIndex %v", in.PrevLogIndex)
-		logrus.Errorf("第一个条件为%v,第二个条件为%v",
-			uint64(len(f.Log)-1) >= in.PrevLogIndex,
-			f.Log[in.PrevLogIndex].Term == in.PrevLogTerm)
+		// logrus.Errorf("第一个条件为%v,第二个条件为%v",
+		// 	uint64(len(f.Log)-1) >= in.PrevLogIndex,
+		// 	f.Log[in.PrevLogIndex].Term == in.PrevLogTerm)
 		result.Success = false
 		return
 	}
