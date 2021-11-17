@@ -9,33 +9,11 @@ import (
 
 func main() {
 
-	//测试=================
-	//测试期间，只能创建三个节点，ID 分别是 8800、8801、8802
-	// node.PORT, _ = strconv.Atoi(os.Args[1])
-	// nodesConfig := []node.Config{
-	// 	{
-	// 		ID:        ":8800",
-	// 		NextIndex: 1,
-	// 	},
-	// 	{
-	// 		ID:        ":8801",
-	// 		NextIndex: 1,
-	// 	},
-	// 	{
-	// 		ID:        ":8802",
-	// 		NextIndex: 1,
-	// 	},
-	// }
-
-	//====================
-
 	n, err := node.NewNode()
 	if err != nil {
 		logrus.Errorln(err.Error())
 		return
 	}
-
-	// n.NodesConfig = nodesConfig
 
 	//加入到当前环境下的网络
 	logrus.Info("尝试JOIN")

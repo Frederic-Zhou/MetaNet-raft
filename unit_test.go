@@ -2,33 +2,25 @@ package main
 
 import (
 	"fmt"
+	"metanet/lanscan"
 	"testing"
 )
 
-type my struct {
-	name string
-}
+func TestLanscan(t *testing.T) {
+	// Scan for hosts listening on tcp port 80.
+	// Use 20 threads and timeout after 5 seconds.
 
-type you = my
+	for _, current := range lanscan.LinkLocalAddresses("tcp4") {
+		allIPs := lanscan.CalculateSubnetIPs(current)
+		fmt.Println(allIPs)
+	}
+	// ctx, cancel := context.WithTimeout(context.Background(), 1000*time.Millisecond)
+	// defer cancel()
 
-func (m *my) foo() {
-
-}
-
-func TestTypeTrans(t *testing.T) {
-
-	a := my{name: "zeta"}
-
-	b := you{}
-	b.foo()
-	// b :=
-
-	// fmt.Println(a, you(a))
-
-	a.name = "chow"
-	fmt.Println(a, you(a))
-
-	// b.name = "fred"
-	// fmt.Println(a, b)
-
+	// conn, err := grpc.DialContext(ctx, fmt.Sprintf("%s:%s", "192.168.3.82", "8800"), grpc.WithBlock(), grpc.WithInsecure())
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// 	return
+	// }
+	// defer conn.Close()
 }

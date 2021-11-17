@@ -4,6 +4,7 @@ package node
 import (
 	context "context"
 	"fmt"
+	"metanet/network"
 	"metanet/rpc"
 	"net"
 	"time"
@@ -15,26 +16,6 @@ import (
 func NewNode() (n *Node, err error) {
 
 	n = &Node{}
-
-	//先填充自己的网络资料配置
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		return
-	}
-	for _, address := range addrs {
-		// 检查ip地址判断是否回环地址
-		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				n.Config.ID = ipnet.IP.String()
-			}
-		}
-	}
-
-	if n.Config.ID == "" {
-		err = fmt.Errorf("no network")
-		return
-	}
-
 	n.Config.PrivateKey = []byte{}
 	n.Config.PublicKey = []byte{}
 
@@ -44,6 +25,13 @@ func NewNode() (n *Node, err error) {
 			Data: []byte{},
 		},
 	}
+
+	ips := network.LinkLocalAddresses("tcp4")
+	if len(ips) != 1 {
+		return nil, fmt.Errorf("网络错误 %v", ips)
+	}
+
+	n.ID = ips[0]
 
 	n.Timer = time.NewTimer(RandMillisecond())
 

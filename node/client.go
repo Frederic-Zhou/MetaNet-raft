@@ -4,11 +4,11 @@ import (
 	context "context"
 	"fmt"
 	"log"
+	"metanet/network"
 	"metanet/rpc"
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"github.com/stefanwichmann/lanscan"
 	"google.golang.org/grpc"
 )
 
@@ -36,31 +36,29 @@ func (c *Client) ClientRequestCall(cmd []byte) (result *rpc.ClientResults, err e
 func (c *Client) Join() (string, error) {
 	//var validNetworks = []string{"tcp", "tcp4", "tcp6", "udp", "udp4", "udp6", "ip", "ip4", "ip6", "unix", "unixgram", "unixpacket"}
 
-	//查找本地网络环境下的节点
-	hosts, err := lanscan.ScanLinkLocal("tcp", PORT, 20, 5*time.Second)
-	logrus.Info(hosts, err)
-	if err != nil {
-		return "", err
+	//得到所有tcp4的网卡的网络环境的IP列表（理论列表）
+	allIPs := []string{}
+	for _, current := range network.LinkLocalAddresses("tcp4") {
+		allIPs = append(allIPs, network.CalculateSubnetIPs(current)...)
 	}
 
 	leaderID := ""
 	lastNodeID := ""
-
 	//轮训所有可连接地址
-	for _, host := range hosts {
+	for _, host := range allIPs {
 		if leaderID != "" {
 			host = leaderID
 		}
-
-		conn, err := grpc.Dial(fmt.Sprintf("%s:%d", host, PORT), grpc.WithInsecure())
+		logrus.Info("try:", host)
+		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+		defer cancel()
+		conn, err := grpc.DialContext(ctx, fmt.Sprintf("%s:%d", host, PORT), grpc.WithBlock(), grpc.WithInsecure())
 		if err != nil {
 			continue
 		}
 
 		nodeclient := rpc.NewNodeClient(conn)
-		//创建一个超时的context，在下面进行rpc请求的时候，通过这个超时context控制请求超时
-		ctx, cancel := context.WithTimeout(context.Background(), MaxTimeout*time.Millisecond)
-		defer cancel()
+
 		result, err := nodeclient.ClientRequest(ctx, &rpc.ClientArguments{Data: []byte("join")})
 
 		logrus.Info("Join ", host, err, result)
