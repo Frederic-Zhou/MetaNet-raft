@@ -2,7 +2,6 @@ package node
 
 import (
 	context "context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -20,7 +19,7 @@ type Leader = Node
 func (l *Leader) AppendEntriesCall() {
 
 	//上一届Leader是否存在于配置表
-	needAddPreLeaderID := true
+	needAddPreLeaderID := len(l.NodesConfig) > 0
 	for _, cfg := range l.NodesConfig {
 		if cfg.ID == l.LeaderID {
 			needAddPreLeaderID = false
@@ -36,6 +35,7 @@ func (l *Leader) AppendEntriesCall() {
 	//===========================
 
 	//等待迎接新节点加入
+
 	go l.receptionNewNodes()
 
 	// 读取出所有的节点配置地址
@@ -52,9 +52,6 @@ func (l *Leader) AppendEntriesCall() {
 			//如果不再是Learder 退出
 			return
 		}
-
-		body, _ := json.Marshal(l.NodesConfig)
-		logrus.Info(string(body))
 
 		// logrus.Infof("all nodes count is %d", len(l.MatchIndex))
 		for _, config := range l.NodesConfig {
@@ -170,11 +167,11 @@ func (l *Leader) receptionNewNodes() {
 
 	//检查有没有新增的节点配置
 	//如果有，发起链接和心跳
-
+	ShowNodesConfig(l)
 	for id := range l.newNodeChan {
 		newCfg := &Config{ID: id, NextIndex: 1}
 		l.NodesConfig = append(l.NodesConfig, newCfg)
-
+		ShowNodesConfig(l)
 		go l.connectAndAppend(newCfg)
 	}
 

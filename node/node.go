@@ -3,6 +3,7 @@ package node
 
 import (
 	context "context"
+	"encoding/json"
 	"metanet/rpc"
 	"net"
 	"time"
@@ -170,4 +171,10 @@ func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (resu
 
 	result.State = 1
 	return
+}
+
+func ShowNodesConfig(n *Node) {
+	body, _ := json.Marshal(n.NodesConfig)
+	logrus.Info(string(body))
+
 }
