@@ -20,18 +20,8 @@ func (l *Leader) AppendEntriesCall() {
 
 	//当配置不为空的时候，如果上届leader ID不存在于配置列表，那么就添加
 	//note:也就是不是第一个原始Leader时（原始Leader不是从follower转变的，所以leaderid一定是空，不能添加到配置列表中）
-	needAddPreLeaderID := len(l.NodesConfig) > 0
-	for _, cfg := range l.NodesConfig {
-		if cfg.ID == l.LeaderID {
-			needAddPreLeaderID = false
-			break
-		}
-	}
-
-	//如果不存在，就添加到配置表
-	if needAddPreLeaderID {
-		l.NodesConfig = append(l.NodesConfig, &Config{ID: l.LeaderID, NextIndex: 1})
-	}
+	l.AddNodesConfig(&Config{ID: l.LeaderID, NextIndex: 1})
+	l.LeaderID = l.ID
 
 	//===========================
 
@@ -169,8 +159,7 @@ func (l *Leader) receptionNewNodes() {
 	//如果有，发起链接和心跳
 	for id := range l.NewNodeChan {
 		newCfg := &Config{ID: id, NextIndex: 1}
-		l.NodesConfig = append(l.NodesConfig, newCfg)
-		ShowNodesConfig(l)
+		l.AddNodesConfig(newCfg)
 		go l.connectAndAppend(newCfg)
 	}
 }

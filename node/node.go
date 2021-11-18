@@ -167,3 +167,17 @@ func ShowNodesConfig(n *Node) {
 	logrus.Info(string(body))
 
 }
+
+func (n *Node) AddNodesConfig(newcfg *Config) {
+	add := true
+	for _, cfg := range n.NodesConfig {
+		if cfg.ID == newcfg.ID {
+			add = false
+			break
+		}
+	}
+
+	if add {
+		n.NodesConfig = append(n.NodesConfig, newcfg)
+	}
+}
