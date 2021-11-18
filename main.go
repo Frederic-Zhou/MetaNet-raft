@@ -32,7 +32,7 @@ func main() {
 	}
 
 	go n.RpcServerStart()
-	time.Sleep(3 * time.Second)
+	time.Sleep(1 * time.Second)
 	n.Become(node.Role_Follower)
 	go n.ApplyStateMachine()
 	go n.NodeWork()

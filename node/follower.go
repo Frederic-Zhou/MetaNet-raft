@@ -32,19 +32,24 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 	result.Term = f.CurrentTerm
 	result.Success = true
 
-	//如果领导人的任期小于接收者的当前任期（接受者为Follower和Candidate）
-	//note: 是否在这里判断的时候排出掉自己是Leader的情况????(Leader并不会给自己发送消息)
-	if in.Term < f.CurrentTerm {
-		result.Success = false
-		return
-	}
-
 	// 所有服务器实现，如果接收到的RPC的 Term高于自己，那么更新自己的Term，并且切换为Follower
 	if in.Term > f.CurrentTerm {
 		f.Become(Role_Follower)
 		//如果接收到的RPC请求或响应中，任期号大于当前任期号，则当前任期号改为接收到的任期号
 		f.CurrentTerm = in.Term
 		f.VotedFor = ""
+	}
+
+	//此判断语句以下的实现都要排除自己是Leader的情况
+	if f.CurrentRole == Role_Leader {
+		return
+	}
+
+	//如果领导人的任期小于接收者的当前任期（接受者为Follower和Candidate）
+	//note: 是否在这里判断的时候排出掉自己是Leader的情况????
+	if in.Term < f.CurrentTerm {
+		result.Success = false
+		return
 	}
 
 	//如果没有找到匹配PrevLogIndex和PrevLogTerm的，则返回false

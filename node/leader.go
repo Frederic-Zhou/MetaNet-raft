@@ -87,7 +87,7 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 
 	logrus.Warn("connect to ", cfg.ID)
 
-	//不用发给自己
+	//不能发给自己
 	if cfg.ID == l.ID {
 		return
 	}

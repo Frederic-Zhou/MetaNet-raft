@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"metanet/network"
 	"metanet/rpc"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -133,31 +134,25 @@ func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (resu
 		Data: in.Data,
 	}
 
-	//如果收到接入请求
-	if string(in.Data) == "join" {
-		//如果自己是Follower(不是 Leader，直接返回0)
-		if n.CurrentRole != Role_Leader {
-			//0表示自己是follower
-			result.State = 0
+	//如果自己不是Leader，调用自己的请求，转发给Leader，这种情况出现在当客户端不是节点，请求到一个不是Leader的节点时
+	//不是Leader的节点用自己的请求函数去请求Leader
+	if n.CurrentRole != Role_Leader {
+		return n.ClientRequestCall(in.Data)
+	}
+
+	//如果收到JOIN请求
+	if string(in.Data) == CMD_JOIN {
+
+		//拿到请求加入节点的地址作为ID
+		id := network.GetGrpcClientIP(ctx)
+		//本机网络的join不处理
+		if strings.HasPrefix(id, "127.") {
 			return
-
-		} else { //是leader，得到IP赋予给ID，然后启动链接，然后写入Log
-
-			//拿到请求加入节点的地址作为ID
-			id := network.GetGrpcClientIP(ctx)
-
-			//更新到节点配置中
-			n.NewNodeChan <- id
-			logrus.Warn("new node join:", id)
-			entry.Data = []byte(fmt.Sprintf("%s%s", "join", id))
 		}
-
-	} else {
-		//如果自己不是Leader，调用自己的请求，转发给Leader，这种情况出现在当客户端不是节点，请求到一个不是Leader的节点时
-		//不是Leader的节点用自己的请求函数去请求Leader
-		if n.CurrentRole != Role_Leader {
-			return n.ClientRequestCall(in.Data)
-		}
+		//更新到节点配置中
+		n.NewNodeChan <- id
+		logrus.Warn("new node join:", id)
+		entry.Data = []byte(fmt.Sprintf("%s%s", CMD_JOIN, id))
 	}
 
 	//写入到日志中

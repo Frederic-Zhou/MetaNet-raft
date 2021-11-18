@@ -17,6 +17,8 @@ const (
 
 	MinTimeout = 150 * 10
 	MaxTimeout = 300 * 10
+
+	CMD_JOIN = "join"
 )
 
 var PORT = 8800

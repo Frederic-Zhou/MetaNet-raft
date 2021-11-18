@@ -1,6 +1,7 @@
 package node
 
 import (
+	"bytes"
 	context "context"
 	"fmt"
 	"log"
@@ -15,6 +16,11 @@ import (
 type Client = Node
 
 func (c *Client) ClientRequestCall(cmd []byte) (result *rpc.ClientResults, err error) {
+
+	//JOIN命令直接返回
+	if bytes.HasPrefix(cmd, []byte(CMD_JOIN)) {
+		return &rpc.ClientResults{State: 0}, nil
+	}
 
 	//链接到节点
 	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", c.LeaderID, PORT), grpc.WithInsecure())
@@ -91,7 +97,7 @@ func liaison(hostchan chan string, resultchan chan []string) {
 			nodeclient := rpc.NewNodeClient(conn)
 			ctx, cancel := context.WithTimeout(context.Background(), MaxTimeout*time.Millisecond)
 			defer cancel()
-			result, err := nodeclient.ClientRequest(ctx, &rpc.ClientArguments{Data: []byte("join")})
+			result, err := nodeclient.ClientRequest(ctx, &rpc.ClientArguments{Data: []byte(CMD_JOIN)})
 			//如果发生网络错误，说明该地址下没有启动节点。
 			if err != nil {
 				resultchan <- []string{"", host}
