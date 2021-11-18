@@ -19,5 +19,9 @@ func (n *Node) StateMachineHandler(data []byte) (err error) {
 
 	jsondata, _ := json.Marshal(n.Log)
 	logrus.Info(string(jsondata))
+
+	jsondata, _ = json.Marshal(n.NodesConfig)
+	logrus.Info(string(jsondata))
+
 	return
 }

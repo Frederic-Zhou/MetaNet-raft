@@ -71,9 +71,9 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 	//追加日志中尚未存在的任何条目
 	f.Log = append(f.Log, in.Entries...)
 
-	if len(in.Entries) > 0 {
-		logrus.Info(f.Log)
-	}
+	// if len(in.Entries) > 0 {
+	// 	logrus.Info("new log is:", f.Log)
+	// }
 
 	//同步Leader的CommitIndex
 	//note: 有可能出现本节点是较慢的节点，Leader已经提交了较高的Index，但是本节点未必获得了领导的最高提交Index的日志
