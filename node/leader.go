@@ -2,7 +2,6 @@ package node
 
 import (
 	context "context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -102,6 +101,7 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 		}
 
 		//创建一个请求参数对象，并配置其中的值
+
 		nextIndex := cfg.NextIndex
 		lastIndex := uint64(len(l.Log) - 1)
 
@@ -133,9 +133,8 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 		}
 
 		if len(entries) > 0 {
-			logrus.Infof("prevlogIndex: %v, prelogTerm: %v ,commitIndex %v,lastAppliedIndex %v, entries: %v,Append: term: %v,success: %v", eArguments.PrevLogIndex, eArguments.PrevLogTerm, l.CommitIndex, l.LastApplied, entries, results.Term, results.Success)
-			jsondata, _ := json.Marshal(l.NodesConfig)
-			logrus.Info(string(jsondata))
+			logrus.Infof("to %v, prevlogIndex: %v, prelogTerm: %v ,commitIndex %v,lastAppliedIndex %v, entries: %v,Append: term: %v,success: %v",
+				cfg.ID, eArguments.PrevLogIndex, eArguments.PrevLogTerm, l.CommitIndex, l.LastApplied, entries, results.Term, results.Success)
 		}
 
 		//如果收到的Term大于当前轮，成为
