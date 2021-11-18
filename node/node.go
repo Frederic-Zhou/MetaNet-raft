@@ -4,6 +4,7 @@ package node
 import (
 	context "context"
 	"encoding/json"
+	"fmt"
 	"metanet/network"
 	"metanet/rpc"
 	"time"
@@ -27,7 +28,7 @@ func NewNode() (n *Node, err error) {
 	}
 
 	n.Timer = time.NewTimer(RandMillisecond())
-	n.NewNodeChan = make(chan string, 20)
+	n.NewNodeChan = make(chan *Config, 20)
 
 	return
 }
@@ -63,12 +64,15 @@ func (n *Node) Become(role NodeRole) {
 }
 
 func (n *Node) ApplyStateMachine() {
-	//todo: 应用到状态机，目前简单的线打印出来做调试
+
 	for {
-		// logrus.Info("read log", n.CommitIndex, n.LastApplied)
+
 		if n.CommitIndex > n.LastApplied {
-			n.LastApplied++
-			logrus.Info("Applied StateMachine:", n.Log[n.LastApplied])
+			err := n.StateMachineHandler(n.Log[n.LastApplied].Data)
+			if err != nil {
+				n.LastApplied++
+			}
+
 		}
 	}
 
@@ -124,36 +128,35 @@ func (n *Node) RequestVote(ctx context.Context, in *rpc.VoteArguments) (result *
 func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (result *rpc.ClientResults, err error) {
 	result = &rpc.ClientResults{}
 
-	//如果收到接入请求
-	if string(in.Data) == "join" {
-		//如果自己是Leader
-		if n.CurrentRole == Role_Leader {
-
-			//1 表示是Leader加入成功
-			result.State = 1
-			//拿到请求加入节点的地址作为ID
-			id := network.GetGrpcClientIP(ctx)
-
-			//更新到节点配置中
-			n.NewNodeChan <- id
-			logrus.Warn("new node join:", id)
-
-		} else {
-			//0表示自己是节点
-			result.State = 0
-		}
-		return
-	}
-
-	//如果自己不是Leader，调用自己的请求，转发给Leader，这种情况出现在当客户端不是节点，请求到一个不是Leader的节点时
-	//不是Leader的节点用自己的请求函数去请求Leader
-	if n.CurrentRole != Role_Leader {
-		return n.ClientRequestCall(in.Data)
-	}
-
 	entry := &rpc.Entry{
 		Term: n.CurrentTerm,
 		Data: in.Data,
+	}
+
+	//如果收到接入请求
+	if string(in.Data) == "join" {
+		//如果自己是Follower(不是 Leader，直接返回0)
+		if n.CurrentRole != Role_Leader {
+			//0表示自己是follower
+			result.State = 0
+			return
+
+		} else { //是leader，得到IP赋予给ID，然后启动链接，然后写入Log
+
+			//拿到请求加入节点的地址作为ID
+			id := network.GetGrpcClientIP(ctx)
+
+			//写入一个join的log条目
+			logrus.Warn("new node join:", id)
+			entry.Data = []byte(fmt.Sprintf("%s%s", "join", id))
+		}
+
+	} else {
+		//如果自己不是Leader，调用自己的请求，转发给Leader，这种情况出现在当客户端不是节点，请求到一个不是Leader的节点时
+		//不是Leader的节点用自己的请求函数去请求Leader
+		if n.CurrentRole != Role_Leader {
+			return n.ClientRequestCall(in.Data)
+		}
 	}
 
 	//写入到日志中

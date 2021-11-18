@@ -94,5 +94,5 @@ type Node struct {
 	Timer *time.Timer
 
 	PrivateKey  []byte
-	NewNodeChan chan string
+	NewNodeChan chan *Config
 }
