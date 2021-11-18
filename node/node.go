@@ -177,7 +177,7 @@ func (n *Node) AddNodesConfig(newcfg *Config) {
 		}
 	}
 
-	if add {
+	if add && newcfg.ID != "" {
 		n.NodesConfig = append(n.NodesConfig, newcfg)
 	}
 }
