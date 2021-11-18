@@ -2,6 +2,7 @@ package node
 
 import (
 	context "context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -133,6 +134,8 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 
 		if len(entries) > 0 {
 			logrus.Infof("prevlogIndex: %v, prelogTerm: %v ,commitIndex %v,lastAppliedIndex %v, entries: %v,Append: term: %v,success: %v", eArguments.PrevLogIndex, eArguments.PrevLogTerm, l.CommitIndex, l.LastApplied, entries, results.Term, results.Success)
+			jsondata, _ := json.Marshal(l.NodesConfig)
+			logrus.Info(string(jsondata))
 		}
 
 		//如果收到的Term大于当前轮，成为
