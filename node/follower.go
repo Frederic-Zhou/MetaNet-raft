@@ -64,6 +64,7 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 		// 	uint64(len(f.Log)-1) >= in.PrevLogIndex,
 		// 	f.Log[in.PrevLogIndex].Term == in.PrevLogTerm)
 		result.Success = false
+		logrus.Warn(result)
 		return
 	}
 
