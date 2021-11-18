@@ -140,7 +140,8 @@ func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (resu
 		return n.ClientRequestCall(in.Data)
 	}
 
-	//如果收到JOIN请求
+	//如果收到JOIN请求，ClientRequestCall 发送内的规则限制一定不是通过调用 ClientRequestCall 收到的join
+	//因此，这里可以认为，一定是客户端直接发送的join，而不是ClientRequestCall 来的join
 	if string(in.Data) == CMD_JOIN {
 
 		//拿到请求加入节点的地址作为ID
@@ -152,6 +153,7 @@ func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (resu
 		//更新到节点配置中
 		n.NewNodeChan <- id
 		logrus.Warn("new node join:", id)
+		result.Data = []byte(id)
 		entry.Data = []byte(fmt.Sprintf("%s%s", CMD_JOIN, id))
 	}
 

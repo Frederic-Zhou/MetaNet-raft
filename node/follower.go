@@ -40,10 +40,12 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 	}
 
 	//此判断语句以下的实现都要排除自己是Leader的情况
-	if f.CurrentRole == Role_Leader {
-		return
-	}
-	logrus.Warning("ROLE:", f.CurrentRole)
+	//note:以下判断是错误的，无论如何都不能接收，尽管直接返回，但是不管result.Success是true还是false，都会影响集群结果
+	//所以注释掉，在Leader发送数据的地方处理，绝对不能给自己发
+	// if f.CurrentRole == Role_Leader {
+	// 	return
+	// }
+	// logrus.Warning("ROLE:", f.CurrentRole)
 
 	//如果领导人的任期小于接收者的当前任期（接受者为Follower和Candidate）
 	//note: 是否在这里判断的时候排出掉自己是Leader的情况????

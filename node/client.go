@@ -71,6 +71,7 @@ func (c *Client) Join() (leaderID string, fastNodeID string) {
 		logrus.Info(result)
 		if result[0] == "leader" {
 			leaderID = result[1]
+			c.ID = result[2]
 			return
 		} else if result[0] == "follower" {
 			if fastNodeID == "" {
@@ -108,7 +109,7 @@ func liaison(hostchan chan string, resultchan chan []string) {
 			case 0: //follower
 				resultchan <- []string{"follower", host}
 			case 1: //leader
-				resultchan <- []string{"leader", host}
+				resultchan <- []string{"leader", host, string(result.Data)}
 			default:
 			}
 		}()
