@@ -94,10 +94,5 @@ type Node struct {
 
 	Timer *time.Timer
 
-<<<<<<< HEAD
-	PrivateKey  []byte
-	NewNodeChan chan *Config
-=======
-	newNodeChan chan string
->>>>>>> parent of fee9191 (调整对象)
+	NewNodeChan chan string
 }
