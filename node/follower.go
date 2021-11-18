@@ -26,7 +26,7 @@ func RandMillisecond() time.Duration {
 func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) (result *rpc.EntriesResults, err error) {
 	//收到心跳重制timer
 	f.Timer.Reset(RandMillisecond())
-	logrus.Warning(".")
+	// logrus.Warning(".")
 
 	result = &rpc.EntriesResults{}
 	result.Term = f.CurrentTerm

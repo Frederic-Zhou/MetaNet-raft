@@ -114,7 +114,7 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 		nextIndex := cfg.NextIndex
 		lastIndex := uint64(len(l.Log) - 1)
 
-		logrus.Infof("leaderLogLen %v,nextIndex:%v, lastIndex:%v", len(l.Log), nextIndex, lastIndex)
+		// logrus.Infof("leaderLogLen %v,nextIndex:%v, lastIndex:%v", len(l.Log), nextIndex, lastIndex)
 
 		//对于Follower 追加日志中尚未写入的所有条目
 		entries := []*rpc.Entry{}
@@ -141,7 +141,7 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 			continue
 		}
 
-		logrus.Infof("prevlogIndex: %v, prelogTerm: %v ,commitIndex %v,lastAppliedIndex %v, entries: %v,Append: term: %v,success: %v", eArguments.PrevLogIndex, eArguments.PrevLogTerm, l.CommitIndex, l.LastApplied, entries, results.Term, results.Success)
+		// logrus.Infof("prevlogIndex: %v, prelogTerm: %v ,commitIndex %v,lastAppliedIndex %v, entries: %v,Append: term: %v,success: %v", eArguments.PrevLogIndex, eArguments.PrevLogTerm, l.CommitIndex, l.LastApplied, entries, results.Term, results.Success)
 
 		//如果收到的Term大于当前轮，成为
 		if results.Term > l.CurrentTerm {
