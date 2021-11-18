@@ -25,7 +25,10 @@ type Config struct {
 	//Node ID
 	ID string
 
-	PublicKey []byte
+	PrivateKey []byte
+	PublicKey  []byte
+
+	CurrentRole NodeRole
 
 	//下一次应该发送的索引位置
 	NextIndex uint64
@@ -89,10 +92,12 @@ type Node struct {
 	//other known nodes configs
 	NodesConfig []*Config
 
-	CurrentRole NodeRole
-
 	Timer *time.Timer
 
+<<<<<<< HEAD
 	PrivateKey  []byte
 	NewNodeChan chan *Config
+=======
+	newNodeChan chan string
+>>>>>>> parent of fee9191 (调整对象)
 }

@@ -167,7 +167,16 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 func (l *Leader) receptionNewNodes() {
 	//检查有没有新增的节点配置
 	//如果有，发起链接和心跳
+<<<<<<< HEAD
 	for cfg := range l.NewNodeChan {
 		go l.connectAndAppend(cfg)
+=======
+	ShowNodesConfig(l)
+	for id := range l.newNodeChan {
+		newCfg := &Config{ID: id, NextIndex: 1}
+		l.NodesConfig = append(l.NodesConfig, newCfg)
+		ShowNodesConfig(l)
+		go l.connectAndAppend(newCfg)
+>>>>>>> parent of fee9191 (调整对象)
 	}
 }

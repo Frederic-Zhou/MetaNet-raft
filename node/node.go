@@ -17,8 +17,8 @@ func NewNode() (n *Node, err error) {
 	n = &Node{}
 
 	//todo: 生成私钥
-	n.PrivateKey = []byte{}
-	n.PublicKey = []byte{}
+	n.Config.PrivateKey = []byte{}
+	n.Config.PublicKey = []byte{}
 
 	n.Log = []*rpc.Entry{
 		{
@@ -28,7 +28,11 @@ func NewNode() (n *Node, err error) {
 	}
 
 	n.Timer = time.NewTimer(RandMillisecond())
+<<<<<<< HEAD
 	n.NewNodeChan = make(chan *Config, 20)
+=======
+	n.newNodeChan = make(chan string, 20)
+>>>>>>> parent of fee9191 (调整对象)
 
 	return
 }
@@ -146,7 +150,12 @@ func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (resu
 			//拿到请求加入节点的地址作为ID
 			id := network.GetGrpcClientIP(ctx)
 
+<<<<<<< HEAD
 			//写入一个join的log条目
+=======
+			//更新到节点配置中
+			n.newNodeChan <- id
+>>>>>>> parent of fee9191 (调整对象)
 			logrus.Warn("new node join:", id)
 			entry.Data = []byte(fmt.Sprintf("%s%s", "join", id))
 		}
