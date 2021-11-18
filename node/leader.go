@@ -141,7 +141,9 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 			continue
 		}
 
-		// logrus.Infof("prevlogIndex: %v, prelogTerm: %v ,commitIndex %v,lastAppliedIndex %v, entries: %v,Append: term: %v,success: %v", eArguments.PrevLogIndex, eArguments.PrevLogTerm, l.CommitIndex, l.LastApplied, entries, results.Term, results.Success)
+		if len(entries) > 0 {
+			logrus.Infof("prevlogIndex: %v, prelogTerm: %v ,commitIndex %v,lastAppliedIndex %v, entries: %v,Append: term: %v,success: %v", eArguments.PrevLogIndex, eArguments.PrevLogTerm, l.CommitIndex, l.LastApplied, entries, results.Term, results.Success)
+		}
 
 		//如果收到的Term大于当前轮，成为
 		if results.Term > l.CurrentTerm {

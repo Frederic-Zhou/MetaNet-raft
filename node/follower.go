@@ -65,11 +65,15 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 
 	//如果一个已经存在的条目和新条目冲突（索引相同，任期不同）删除该条目即之后的条目
 	if uint64(len(f.Log)-1) >= in.PrevLogIndex+1 && f.Log[in.PrevLogIndex].Term != in.PrevLogTerm {
-		f.Log = f.Log[:in.PrevLogIndex]
+		f.Log = f.Log[:in.PrevLogIndex+1]
 	}
 
 	//追加日志中尚未存在的任何条目
 	f.Log = append(f.Log, in.Entries...)
+
+	if len(in.Entries) > 0 {
+		logrus.Info(f.Log)
+	}
 
 	//同步Leader的CommitIndex
 	//note: 有可能出现本节点是较慢的节点，Leader已经提交了较高的Index，但是本节点未必获得了领导的最高提交Index的日志
