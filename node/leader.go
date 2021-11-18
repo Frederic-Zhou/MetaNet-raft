@@ -62,7 +62,7 @@ func (l *Leader) AppendEntriesCall() {
 					}
 				}
 
-				if count > len(l.NodesConfig)/2 {
+				if count >= len(l.NodesConfig)/2 {
 					l.CommitIndex = N
 				}
 
@@ -163,6 +163,8 @@ func (l *Leader) receptionNewNodes() {
 	//如果有，发起链接和心跳
 	for id := range l.NewNodeChan {
 		newCfg := &Config{ID: id, NextIndex: 1}
+		//如果添加成功（1. 与现有配置没有重复，2. newCfg的ID不是 “” ，
+		//2的原因是：在原始节点成为Leader时，会添加一次上次LeaderID，但是原始节点没有上次LeaderID，会提交一个空ID，这是不行的，所以在条件中排出掉）
 		if l.AddNodesConfig(newCfg) {
 			go l.connectAndAppend(newCfg)
 		}
