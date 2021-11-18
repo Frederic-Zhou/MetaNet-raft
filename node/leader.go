@@ -80,7 +80,7 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 		return
 	}
 
-	logrus.Warn("connect to ", cfg.ID, "self ", l.ID)
+	logrus.Warnf("connect to %v self %v", cfg.ID, l.ID)
 
 	//链接各个节点
 	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", cfg.ID, PORT), grpc.WithInsecure())
