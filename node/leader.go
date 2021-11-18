@@ -95,7 +95,7 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 
 	//间隔50毫秒，不断的给Follower发送条目或者心跳
 	for {
-		logrus.Info("-----------")
+
 		if l.CurrentRole != Role_Leader {
 			//如果不再是Learder 退出
 			break
@@ -138,10 +138,11 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 				cfg.ID, eArguments.PrevLogIndex, eArguments.PrevLogTerm, l.CommitIndex, l.LastApplied, entries, results.Term, results.Success)
 		}
 
-		//如果收到的Term大于当前轮，成为
+		//如果收到的Term大于当前轮，成为Follower
 		if results.Term > l.CurrentTerm {
 			l.CurrentTerm = results.Term
 			l.Become(Role_Follower)
+			return
 		}
 
 		//成功后，更新对应跟随者的MatchIndex和NextIndex

@@ -27,8 +27,6 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 	//收到心跳重制timer
 	f.Timer.Reset(RandMillisecond())
 
-	logrus.Warn(".")
-
 	result = &rpc.EntriesResults{}
 	result.Term = f.CurrentTerm
 	result.Success = true
