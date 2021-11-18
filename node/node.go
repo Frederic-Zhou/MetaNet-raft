@@ -66,7 +66,7 @@ func (n *Node) Become(role NodeRole) {
 func (n *Node) ApplyStateMachine() {
 
 	for {
-		logrus.Warn(n.CommitIndex, n.LastApplied)
+
 		if n.CommitIndex > n.LastApplied {
 			err := n.StateMachineHandler(n.Log[n.LastApplied].Data)
 			if err == nil {
