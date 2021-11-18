@@ -167,7 +167,6 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 func (l *Leader) receptionNewNodes() {
 	//检查有没有新增的节点配置
 	//如果有，发起链接和心跳
-	ShowNodesConfig(l)
 	for id := range l.NewNodeChan {
 		newCfg := &Config{ID: id, NextIndex: 1}
 		l.NodesConfig = append(l.NodesConfig, newCfg)
