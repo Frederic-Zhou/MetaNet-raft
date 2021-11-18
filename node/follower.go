@@ -72,7 +72,7 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 	f.Log = append(f.Log, in.Entries...)
 
 	// if len(in.Entries) > 0 {
-	logrus.Info("new log is:", f.Log)
+	logrus.Info("new log is:", in.Entries)
 	// }
 
 	//同步Leader的CommitIndex
