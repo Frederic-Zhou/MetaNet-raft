@@ -131,8 +131,6 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 			LeaderCommit: l.CommitIndex,
 		}
 
-		logrus.Infof("eargs : prevlogIndex: %v, prelogTerm: %v , entries: %v", eArguments.PrevLogIndex, eArguments.PrevLogTerm, entries)
-
 		//创建一个超时的context，在下面进行rpc请求的时候，通过这个超时context控制请求超时
 		ctx, cancel := context.WithTimeout(context.Background(), MinTimeout*time.Millisecond)
 		defer cancel()
@@ -143,7 +141,7 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 			continue
 		}
 
-		logrus.Infof("Append: term: %v,success: %v", results.Term, results.Success)
+		logrus.Infof("prevlogIndex: %v, prelogTerm: %v ,commitIndex %v,lastAppliedIndex %v, entries: %v,Append: term: %v,success: %v", eArguments.PrevLogIndex, eArguments.PrevLogTerm, l.CommitIndex, l.LastApplied, entries, results.Term, results.Success)
 
 		//如果收到的Term大于当前轮，成为
 		if results.Term > l.CurrentTerm {

@@ -68,9 +68,10 @@ func (n *Node) ApplyStateMachine() {
 	for {
 
 		if n.CommitIndex > n.LastApplied {
+			n.LastApplied++
 			err := n.StateMachineHandler(n.Log[n.LastApplied].Data)
-			if err == nil {
-				n.LastApplied++
+			if err != nil {
+				n.LastApplied--
 			}
 		}
 	}

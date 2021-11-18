@@ -24,10 +24,9 @@ func RandMillisecond() time.Duration {
 
 //raft/rpc_server: implemented Log and hartbeat transfer, Learder call to Followers
 func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) (result *rpc.EntriesResults, err error) {
-	logrus.Warn("Receive Leader's Append...")
 	//收到心跳重制timer
 	f.Timer.Reset(RandMillisecond())
-	logrus.Warn("Reset Timer...")
+	logrus.Warning(".")
 
 	result = &rpc.EntriesResults{}
 	result.Term = f.CurrentTerm
