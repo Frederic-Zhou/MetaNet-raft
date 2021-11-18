@@ -75,12 +75,13 @@ func (l *Leader) AppendEntriesCall() {
 
 func (l *Leader) connectAndAppend(cfg *Config) {
 
-	logrus.Warn("connect to ", cfg.ID)
-
 	//不能发给自己
 	if cfg.ID == l.ID {
 		return
 	}
+
+	logrus.Warn("connect to ", cfg.ID, "self ", l.ID)
+
 	//链接各个节点
 	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", cfg.ID, PORT), grpc.WithInsecure())
 	if err != nil {
