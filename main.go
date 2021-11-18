@@ -24,6 +24,7 @@ func main() {
 	if lid == "" && fid != "" {
 		n.Become(node.Role_Client)
 		n.LeaderID = fid
+		simpalClient(n)
 	}
 
 	if lid == "" {
@@ -34,8 +35,9 @@ func main() {
 	time.Sleep(3 * time.Second)
 	n.Become(node.Role_Follower)
 	go n.ApplyStateMachine()
-	go simpalClient(n)
-	n.NodeWork()
+	go n.NodeWork()
+
+	simpalClient(n)
 
 }
 
