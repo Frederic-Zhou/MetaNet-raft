@@ -163,7 +163,9 @@ func (l *Leader) receptionNewNodes() {
 	//如果有，发起链接和心跳
 	for id := range l.NewNodeChan {
 		newCfg := &Config{ID: id, NextIndex: 1}
-		l.AddNodesConfig(newCfg)
-		go l.connectAndAppend(newCfg)
+		if l.AddNodesConfig(newCfg) {
+			go l.connectAndAppend(newCfg)
+		}
+
 	}
 }

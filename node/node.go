@@ -170,7 +170,7 @@ func ShowNodesConfig(n *Node) {
 
 }
 
-func (n *Node) AddNodesConfig(newcfg *Config) {
+func (n *Node) AddNodesConfig(newcfg *Config) (added bool) {
 	add := true
 	for _, cfg := range n.NodesConfig {
 		if cfg.ID == newcfg.ID {
@@ -182,4 +182,6 @@ func (n *Node) AddNodesConfig(newcfg *Config) {
 	if add && newcfg.ID != "" {
 		n.NodesConfig = append(n.NodesConfig, newcfg)
 	}
+
+	return add && newcfg.ID != ""
 }
