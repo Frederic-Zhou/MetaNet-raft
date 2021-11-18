@@ -75,7 +75,7 @@ func (l *Leader) AppendEntriesCall() {
 
 func (l *Leader) connectAndAppend(cfg *Config) {
 
-	//不能发给自己
+	//绝对不能发给自己
 	if cfg.ID == l.ID {
 		return
 	}
