@@ -26,7 +26,6 @@ func RandMillisecond() time.Duration {
 func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) (result *rpc.EntriesResults, err error) {
 	//收到心跳重制timer
 	f.Timer.Reset(RandMillisecond())
-	logrus.Warning("ROLE:", f.CurrentRole)
 
 	result = &rpc.EntriesResults{}
 	result.Term = f.CurrentTerm
@@ -44,6 +43,7 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 	if f.CurrentRole == Role_Leader {
 		return
 	}
+	logrus.Warning("ROLE:", f.CurrentRole)
 
 	//如果领导人的任期小于接收者的当前任期（接受者为Follower和Candidate）
 	//note: 是否在这里判断的时候排出掉自己是Leader的情况????
