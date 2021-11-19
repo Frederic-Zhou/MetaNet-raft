@@ -155,7 +155,9 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 				cfg.NextIndex = lastIndex + 1
 			} else {
 				//如果失败，将下一次发送日志的索引减少1，并会在次尝试发送条目
-				cfg.NextIndex = nextIndex - 1
+				//note: 此处做一个改善，从Follower拿到它的最新的日志index，然后从该index之后开始同步
+				// cfg.NextIndex = nextIndex - 1
+				cfg.NextIndex = results.FollowerLastLogIndex + 1
 			}
 		}
 
