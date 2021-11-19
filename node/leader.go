@@ -75,7 +75,7 @@ func (l *Leader) AppendEntriesCall() {
 
 func (l *Leader) connectAndAppend(cfg *Config) {
 
-	//绝对不能发给自己
+	//*****绝对不能发给自己
 	if cfg.ID == l.ID {
 		return
 	}
@@ -96,7 +96,10 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 
 	//间隔50毫秒，不断的给Follower发送条目或者心跳
 	for {
-
+		//*****绝对不能发给自己
+		if cfg.ID == l.ID {
+			break
+		}
 		if l.CurrentRole != Role_Leader {
 			//如果不再是Learder 退出
 			break
