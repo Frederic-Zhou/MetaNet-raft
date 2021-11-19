@@ -9,7 +9,6 @@ import (
 	"metanet/rpc"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
 
@@ -68,7 +67,7 @@ func (c *Client) Join() (leaderID string, fastNodeID string) {
 
 	for i := 0; i < count; i++ {
 		result := <-resultchan
-		logrus.Info(result)
+		// logrus.Info(result)
 		if result[0] == "leader" {
 			leaderID = result[1]
 			c.ID = result[2]
