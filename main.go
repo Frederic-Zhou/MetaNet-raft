@@ -54,6 +54,6 @@ func simpalClient(n *node.Node) {
 		if err != nil {
 			logrus.Error(err.Error())
 		}
-		logrus.Info("发送状态: %v", result.State)
+		logrus.Infof("发送状态: %v", result.State)
 	}
 }
