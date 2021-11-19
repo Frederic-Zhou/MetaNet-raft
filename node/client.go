@@ -83,6 +83,7 @@ func (c *Client) Join() (leaderID string, fastNodeID string) {
 	return
 }
 
+//联络人，负责联络通道中的主机，并且返回结果
 func liaison(hostchan chan string, resultchan chan []string) {
 
 	for host := range hostchan {

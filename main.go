@@ -11,25 +11,7 @@ import (
 
 func main() {
 
-	n, err := node.NewNode()
-	if err != nil {
-		logrus.Errorln(err.Error())
-		return
-	}
-
-	//加入到当前环境下的网络
-	logrus.Info("尝试JOIN")
-	lid, fid := n.Join()
-
-	if lid == "" && fid != "" {
-		n.Become(node.Role_Client)
-		n.LeaderID = fid
-		simpalClient(n)
-	}
-
-	if lid == "" {
-		logrus.Info("No Leader ... create net")
-	}
+	n := node.NewNode()
 
 	go n.RpcServerStart()
 	time.Sleep(1 * time.Second)

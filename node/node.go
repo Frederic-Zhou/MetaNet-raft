@@ -13,7 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func NewNode() (n *Node, err error) {
+func NewNode() (n *Node) {
 
 	n = &Node{}
 
@@ -37,6 +37,21 @@ func NewNode() (n *Node, err error) {
 func (n *Node) NodeWork() {
 
 	for {
+
+		//如果没有节点加入，那么自己去探索网络
+		if len(n.NodesConfig) == 0 {
+			time.Sleep(1 * time.Second)
+			//加入到当前环境下的网络
+			logrus.Info("尝试JOIN")
+			lid, fid := n.Join()
+
+			if lid == "" && fid != "" {
+				n.Become(Role_Client)
+				n.LeaderID = fid
+			}
+
+		}
+
 		switch n.CurrentRole {
 		case Role_Client:
 

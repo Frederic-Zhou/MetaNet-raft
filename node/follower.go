@@ -93,7 +93,9 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 
 	}
 
-	logrus.Warnf("leaderCommit %v, in.PrevlogIndex %v,commitindex %v, lastapplied %v", in.LeaderCommit, in.PrevLogIndex, f.CommitIndex, f.LastApplied)
+	if len(in.Entries) > 0 {
+		logrus.Warnf("leaderCommit %v, in.PrevlogIndex %v,commitindex %v, lastapplied %v", in.LeaderCommit, in.PrevLogIndex, f.CommitIndex, f.LastApplied)
+	}
 
 	// f.LeaderID = in.LeaderID
 	// 动态节点，将发心跳过来的IP 作为 LeaderID
