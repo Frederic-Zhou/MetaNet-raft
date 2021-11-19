@@ -37,6 +37,9 @@ message entriesResults {
 
 	  //true if follower contained entry matching prevLogIndex and prevLogTerm
 	  bool success = 2; 
+
+    //用于告诉Leader 该Follower 的最新的LogIndex
+    uint64 followerLastLogIndex=3;
 }
 
 message voteArguments {
