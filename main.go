@@ -35,7 +35,7 @@ func mustJoin(n *node.Node) {
 
 			if lid != "" && lid != n.ID {
 				logrus.Info("成功JOIN")
-
+				return
 			}
 		}
 
