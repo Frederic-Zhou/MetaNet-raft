@@ -151,6 +151,13 @@ func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (resu
 		if strings.HasPrefix(id, "127.") {
 			return
 		}
+
+		//当自己Join过自己之后，得到了自己的ID，但是自己Join自己会被认为没有Join成功，所以会一直Join
+		//因此，在之后的Join自己的行为会判断是否是自己，如果是自己，后续不做任何操作。
+		if id == n.ID {
+			return
+		}
+
 		//更新到节点配置中
 		n.NewNodeChan <- id
 		logrus.Warn("new node join:", id)
