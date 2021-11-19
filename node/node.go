@@ -38,20 +38,6 @@ func (n *Node) NodeWork() {
 
 	for {
 
-		//如果没有节点加入，那么自己去探索网络
-		if len(n.NodesConfig) == 0 {
-			time.Sleep(1 * time.Second)
-			//加入到当前环境下的网络
-			logrus.Info("尝试JOIN")
-			lid, fid := n.Join()
-
-			if lid == "" && fid != "" {
-				n.Become(Role_Client)
-				n.LeaderID = fid
-			}
-
-		}
-
 		switch n.CurrentRole {
 		case Role_Client:
 
@@ -67,7 +53,22 @@ func (n *Node) NodeWork() {
 			// 一旦成为领导人，立即发送日志
 			n.AppendEntriesCall()
 			//领导人退位的原因是收到了更高的Term
-			n.Become(Role_Follower)
+			//如果没有节点加入，那么自己去探索网络
+			if len(n.NodesConfig) == 0 {
+				time.Sleep(1 * time.Second)
+				//加入到当前环境下的网络
+				logrus.Info("尝试JOIN")
+				lid, fid := n.Join()
+
+				if lid == "" && fid != "" {
+					n.Become(Role_Client)
+					n.LeaderID = fid
+				}
+
+			} else {
+				n.Become(Role_Follower)
+			}
+
 		}
 	}
 }
