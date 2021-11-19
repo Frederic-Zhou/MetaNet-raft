@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"metanet/node"
-	"os"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -46,17 +45,15 @@ func mustJoin(n *node.Node) {
 func simpalClient(n *node.Node) {
 
 	for {
-		logrus.Info("等待输入：")
 		input := ""
 		_, err := fmt.Scanln(&input)
 		if err != nil {
 			logrus.Error(err.Error())
-			os.Exit(0)
 		}
 		result, err := n.ClientRequestCall([]byte(input))
 		if err != nil {
 			logrus.Error(err.Error())
 		}
-		logrus.Info(result.State)
+		logrus.Info("发送状态: %v", result.State)
 	}
 }
