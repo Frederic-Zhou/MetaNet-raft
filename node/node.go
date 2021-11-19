@@ -16,6 +16,7 @@ import (
 func NewNode() (n *Node) {
 
 	n = &Node{}
+	n.NodesConfig = []*Config{}
 
 	//todo: 生成私钥
 	n.Config.PrivateKey = []byte{}
@@ -135,26 +136,22 @@ func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (resu
 		Data: in.Data,
 	}
 
-	//如果自己不是Leader，调用自己的请求，转发给Leader，这种情况出现在当客户端不是节点，请求到一个不是Leader的节点时
-	//不是Leader的节点用自己的请求函数去请求Leader
+	//如果自己不是Leader，这种情况出现在当客户端不是节点，请求到一个不是Leader的节点时
+	//不是Leader的节点请求Leader
 	if n.CurrentRole != Role_Leader {
-		return n.ClientRequestCall(in.Data)
+		ctxKV := map[string]string{
+			"clientID": network.GetGrpcClientIP(ctx),
+		}
+		return n.ClientRequestCall(in.Data, n.LeaderID, ctxKV)
 	}
 
-	//如果收到JOIN请求，ClientRequestCall 发送内的规则限制一定不是通过调用 ClientRequestCall 收到的join
-	//因此，这里可以认为，一定是客户端直接发送的join，而不是ClientRequestCall 来的join
+	//JOIN 需要立即进行ID获取，因此需要在得到请求阶段就处理，而不能等到状态机处理
 	if string(in.Data) == CMD_JOIN {
 
 		//拿到请求加入节点的地址作为ID
 		id := network.GetGrpcClientIP(ctx)
 		//本机网络的join不处理
 		if strings.HasPrefix(id, "127.") {
-			return
-		}
-
-		//当自己Join过自己之后，得到了自己的ID，但是自己Join自己会被认为没有Join成功，所以会一直Join
-		//因此，在之后的Join自己的行为会判断是否是自己，如果是自己，后续不做任何操作。
-		if id == n.ID {
 			return
 		}
 

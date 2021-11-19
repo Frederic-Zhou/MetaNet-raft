@@ -1,8 +1,10 @@
 package main
 
 import (
-	"fmt"
+	"bufio"
 	"metanet/node"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -11,6 +13,7 @@ import (
 func main() {
 
 	n := node.NewNode()
+	n.ID = "192.168.1.100"
 
 	go n.RpcServerStart()
 	time.Sleep(1 * time.Second)
@@ -18,42 +21,20 @@ func main() {
 	go n.ApplyStateMachine()
 	go n.NodeWork()
 
-	go mustJoin(n)
-
 	simpalClient(n)
 
 }
 
-func mustJoin(n *node.Node) {
-	for {
-
-		if len(n.NodesConfig) == 0 || len(n.NodesConfig) == 1 && n.NodesConfig[0].ID == n.ID {
-			//加入到当前环境下的网络
-			logrus.Info("尝试JOIN")
-			lid, _ := n.Join()
-
-			if lid != "" && lid != n.ID {
-				logrus.Info("成功JOIN")
-				return
-			}
-		}
-
-	}
-
-}
-
 func simpalClient(n *node.Node) {
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		input := scanner.Text()
 
-	for {
-		input := ""
-		_, err := fmt.Scanln(&input)
+		inputArr := strings.Split(input, " ")
+		result, err := n.Command(inputArr[0], inputArr...)
 		if err != nil {
 			logrus.Error(err.Error())
 		}
-		result, err := n.ClientRequestCall([]byte(input))
-		if err != nil {
-			logrus.Error(err.Error())
-		}
-		logrus.Infof("发送状态: %v", result.State)
+		logrus.Infof("发送状态: %v", result)
 	}
 }

@@ -28,6 +28,7 @@ import (
 	"net"
 	"strings"
 
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
 )
 
@@ -124,6 +125,15 @@ func inc(ip net.IP) {
 }
 
 func GetGrpcClientIP(ctx context.Context) (ip string) {
+
+	md, ok := metadata.FromIncomingContext(ctx)
+	if ok {
+		if clientID, ok := md["clientID"]; ok {
+			ip = clientID[0]
+			return
+		}
+	}
+
 	if pr, ok := peer.FromContext(ctx); ok {
 		if tcpAddr, ok := pr.Addr.(*net.TCPAddr); ok {
 			ip = tcpAddr.IP.String()

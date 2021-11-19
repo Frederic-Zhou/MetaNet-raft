@@ -1,19 +1,18 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
+	"net"
 	"testing"
+
+	"github.com/sirupsen/logrus"
 )
 
 func TestLanscan(t *testing.T) {
 
-	a := []int{
-		1, 2, 3, 4, 5, 6,
-	}
+	interfaces, _ := net.Interfaces()
 
-	nextIndex := 1
-	// lastIndex := uint64(len(a) - 1)
-
-	fmt.Println(a[nextIndex:6])
+	jsondata, _ := json.Marshal(interfaces)
+	logrus.Info(string(jsondata))
 
 }
