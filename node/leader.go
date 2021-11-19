@@ -92,6 +92,7 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 	defer conn.Close()
 
 	nodeclient := rpc.NewNodeClient(conn)
+	lastErr := fmt.Errorf("")
 
 	//间隔50毫秒，不断的给Follower发送条目或者心跳
 	for {
@@ -128,30 +129,34 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 		defer cancel()
 		results, err := nodeclient.AppendEntries(ctx, eArguments)
 		if err != nil {
-			logrus.Errorf("AppendEntries err:%v %v\n", cfg.ID, err) // err)
-			time.Sleep(time.Millisecond * MinTimeout / 3)           //1/3个最小超时时间发送一次
-			continue
-		}
+			//当新的错误与上一次错误不同时才打印，否则不打印
+			if lastErr.Error() != err.Error() {
+				logrus.Errorf("AppendEntries err:%v %v\n", cfg.ID, err)
+			}
+			lastErr = err
 
-		if len(entries) > 0 {
-			logrus.Infof("to %v, prevlogIndex: %v, prelogTerm: %v ,commitIndex %v,lastAppliedIndex %v, entries: %v,Append: term: %v,success: %v",
-				cfg.ID, eArguments.PrevLogIndex, eArguments.PrevLogTerm, l.CommitIndex, l.LastApplied, entries, results.Term, results.Success)
-		}
-
-		//如果收到的Term大于当前轮，成为Follower
-		if results.Term > l.CurrentTerm {
-			l.CurrentTerm = results.Term
-			l.Become(Role_Follower)
-			return
-		}
-
-		//成功后，更新对应跟随者的MatchIndex和NextIndex
-		if results.Success {
-			cfg.MatchIndex = lastIndex
-			cfg.NextIndex = lastIndex + 1
 		} else {
-			//如果失败，将下一次发送日志的索引减少1，并会在次尝试发送条目
-			cfg.NextIndex = nextIndex - 1
+
+			if len(entries) > 0 {
+				logrus.Infof("to %v, prevlogIndex: %v, prelogTerm: %v ,commitIndex %v,lastAppliedIndex %v, entries: %v,Append: term: %v,success: %v",
+					cfg.ID, eArguments.PrevLogIndex, eArguments.PrevLogTerm, l.CommitIndex, l.LastApplied, entries, results.Term, results.Success)
+			}
+
+			//如果收到的Term大于当前轮，成为Follower
+			if results.Term > l.CurrentTerm {
+				l.CurrentTerm = results.Term
+				l.Become(Role_Follower)
+				return
+			}
+
+			//成功后，更新对应跟随者的MatchIndex和NextIndex
+			if results.Success {
+				cfg.MatchIndex = lastIndex
+				cfg.NextIndex = lastIndex + 1
+			} else {
+				//如果失败，将下一次发送日志的索引减少1，并会在次尝试发送条目
+				cfg.NextIndex = nextIndex - 1
+			}
 		}
 
 		time.Sleep(time.Millisecond * MinTimeout / 3) //1/3个最小超时时间发送一次

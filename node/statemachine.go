@@ -2,7 +2,6 @@ package node
 
 import (
 	"bytes"
-	"encoding/json"
 
 	"github.com/sirupsen/logrus"
 )
@@ -17,11 +16,11 @@ func (n *Node) StateMachineHandler(data []byte) (err error) {
 		logrus.Info("Applied StateMachine:", n.Log[n.LastApplied])
 	}
 
-	jsondata, _ := json.Marshal(n.Log)
-	logrus.Info(string(jsondata))
+	// jsondata, _ := json.Marshal(n.Log)
+	// logrus.Info(string(jsondata))
 
-	jsondata, _ = json.Marshal(n.NodesConfig)
-	logrus.Info(string(jsondata))
+	// jsondata, _ = json.Marshal(n.NodesConfig)
+	// logrus.Info(string(jsondata))
 
 	return
 }
