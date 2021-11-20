@@ -162,6 +162,8 @@ func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (resu
 				Term: n.CurrentTerm,
 				Data: []byte(fmt.Sprintf("%s%s", CMD_JOIN, selfid)),
 			})
+
+			n.NewNodeChan <- selfid
 		}
 
 		logrus.Warn("new node join:", fromid)
