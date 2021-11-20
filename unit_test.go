@@ -1,18 +1,28 @@
 package main
 
 import (
-	"encoding/json"
-	"net"
+	"fmt"
 	"testing"
-
-	"github.com/sirupsen/logrus"
+	"time"
 )
 
 func TestLanscan(t *testing.T) {
+	fmt.Println("开始")
 
-	interfaces, _ := net.Interfaces()
+	var timer *time.Timer
 
-	jsondata, _ := json.Marshal(interfaces)
-	logrus.Info(string(jsondata))
+	timer = time.NewTimer(0 * time.Second)
+	timer.Reset(5 * time.Second)
 
+	select {
+	case <-timer.C:
+	case <-time.After(3 * time.Second):
+		// timer.Stop()
+	}
+
+	time.Sleep(1 * time.Second)
+	timer.Reset(5 * time.Second)
+	<-timer.C
+
+	fmt.Println("应该要等10s")
 }

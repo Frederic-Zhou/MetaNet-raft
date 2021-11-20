@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"metanet/network"
 	"metanet/rpc"
-	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -16,6 +15,7 @@ import (
 func NewNode() (n *Node) {
 
 	n = &Node{}
+	// n.ID = "-"
 	n.NodesConfig = []*Config{}
 
 	//todo: 生成私钥
@@ -28,8 +28,7 @@ func NewNode() (n *Node) {
 			Data: []byte{},
 		},
 	}
-
-	n.Timer = time.NewTimer(RandMillisecond())
+	// n.Timer = time.NewTimer(0RandMillisecond())
 	n.NewNodeChan = make(chan string, 20)
 
 	return
@@ -43,27 +42,29 @@ func (n *Node) NodeWork() {
 		case Role_Client:
 
 		case Role_Follower:
+			n.Timer = time.NewTimer(RandMillisecond())
 			<-n.Timer.C
 			//Timer返回，说明超时了，身份转变为Candidate
-			n.Become(Role_Candidate)
+			n.Become(Role_Candidate, "心跳超时，成为候选人")
 		case Role_Candidate:
+			logrus.Info("成为了候选人")
 			if n.RequestVoteCall() {
-				n.Become(Role_Leader)
+				n.Become(Role_Leader, "选举获胜")
 			}
 		case Role_Leader:
 			// 一旦成为领导人，立即发送日志
 			n.AppendEntriesCall()
 			//领导人退位的原因是收到了更高的Term
-			n.Become(Role_Follower)
+			n.Become(Role_Follower, "结束发送数据")
 		}
 	}
 }
 
-func (n *Node) Become(role NodeRole) {
+func (n *Node) Become(role NodeRole, reason string) {
 	n.CurrentRole = role
-	logrus.Infof("Now I'm %d term is %d \n",
-		n.CurrentRole,
-		n.CurrentTerm)
+	logrus.Infof("Change to I'm %s term is %d ,reason %v \n",
+		[]string{"Client", "Follower", "Candidate", "Leader"}[n.CurrentRole],
+		n.CurrentTerm, reason)
 }
 
 func (n *Node) ApplyStateMachine() {
@@ -99,7 +100,7 @@ func (n *Node) RequestVote(ctx context.Context, in *rpc.VoteArguments) (result *
 	}
 
 	if in.Term > n.CurrentTerm {
-		n.Become(Role_Follower)
+		n.Become(Role_Follower, "收到比自己轮大的投票")
 		//如果接收到的RPC请求或响应中，任期号大于当前任期号，则当前任期号改为接收到的任期号
 		n.CurrentTerm = in.Term
 		n.VotedFor = ""
@@ -139,8 +140,9 @@ func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (resu
 	//如果自己不是Leader，这种情况出现在当客户端不是节点，请求到一个不是Leader的节点时
 	//不是Leader的节点请求Leader
 	if n.CurrentRole != Role_Leader {
+		fromid, _ := network.GetGrpcClientIP(ctx)
 		ctxKV := map[string]string{
-			"clientID": network.GetGrpcClientIP(ctx),
+			"clientid": fromid,
 		}
 		return n.ClientRequestCall(in.Data, n.LeaderID, ctxKV)
 	}
@@ -149,17 +151,22 @@ func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (resu
 	if string(in.Data) == CMD_JOIN {
 
 		//拿到请求加入节点的地址作为ID
-		id := network.GetGrpcClientIP(ctx)
-		//本机网络的join不处理
-		if strings.HasPrefix(id, "127.") {
-			return
+		fromid, selfid := network.GetGrpcClientIP(ctx)
+
+		logrus.Infof("id %v, selfid %v, fromid %v", n.ID, selfid, fromid)
+		if n.ID == "" { //如果是自己的ID是空，说明是第一次得到自己的ID，同样写入到日志中
+			n.ID = selfid
+
+			n.Log = append(n.Log, &rpc.Entry{
+				Term: n.CurrentTerm,
+				Data: []byte(fmt.Sprintf("%s%s", CMD_JOIN, selfid)),
+			})
 		}
 
-		//更新到节点配置中
-		n.NewNodeChan <- id
-		logrus.Warn("new node join:", id)
-		result.Data = []byte(id)
-		entry.Data = []byte(fmt.Sprintf("%s%s", CMD_JOIN, id))
+		logrus.Warn("new node join:", fromid)
+		//作为Leader，立即添加配置并且链接
+		n.NewNodeChan <- fromid
+		entry.Data = []byte(fmt.Sprintf("%s%s", CMD_JOIN, fromid))
 	}
 
 	//写入到日志中

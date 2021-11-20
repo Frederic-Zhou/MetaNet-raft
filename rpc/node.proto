@@ -76,5 +76,4 @@ message clientArguments{
 
 message clientResults{
   int32 state = 1;
-  bytes data = 2;
 }

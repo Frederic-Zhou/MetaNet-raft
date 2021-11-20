@@ -18,6 +18,7 @@ import (
 type Follower = Node
 
 func RandMillisecond() time.Duration {
+	// logrus.Error("set了一次")
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	return time.Millisecond * time.Duration((MinTimeout + r.Intn(MaxTimeout-MinTimeout)))
 }
@@ -27,16 +28,22 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 	//收到心跳重制timer
 	f.Timer.Reset(RandMillisecond())
 
+	// rid, sid := network.GetGrpcClientIP(ctx)
+	// logrus.Warnf("---%v,%v", rid, sid)
+
 	result = &rpc.EntriesResults{}
 	result.Term = f.CurrentTerm
 	result.Success = true
 
 	// 所有服务器实现，如果接收到的RPC的 Term高于自己，那么更新自己的Term，并且切换为Follower
 	if in.Term > f.CurrentTerm {
-		f.Become(Role_Follower)
+		// 动态节点，将发心跳过来的IP 作为 LeaderID, 请求目标IP就是自己的ID
+		f.LeaderID, f.ID = network.GetGrpcClientIP(ctx)
+
 		//如果接收到的RPC请求或响应中，任期号大于当前任期号，则当前任期号改为接收到的任期号
 		f.CurrentTerm = in.Term
 		f.VotedFor = ""
+		f.Become(Role_Follower, "收到一个比自己轮大的心跳")
 	}
 
 	//此判断语句以下的实现都要排除自己是Leader的情况
@@ -96,10 +103,6 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 	if len(in.Entries) > 0 {
 		logrus.Warnf("leaderCommit %v, in.PrevlogIndex %v,commitindex %v, lastapplied %v", in.LeaderCommit, in.PrevLogIndex, f.CommitIndex, f.LastApplied)
 	}
-
-	// f.LeaderID = in.LeaderID
-	// 动态节点，将发心跳过来的IP 作为 LeaderID
-	f.LeaderID = network.GetGrpcClientIP(ctx)
 
 	return
 }

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"log"
 	"metanet/rpc"
-	"time"
 
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
@@ -29,35 +29,53 @@ func (c *Client) ClientRequestCall(cmd []byte, to string, md map[string]string) 
 
 	nodeclient := rpc.NewNodeClient(conn)
 
-	ctx, cancel := context.WithTimeout(context.Background(), MinTimeout*time.Millisecond)
-	defer cancel()
+	// ctx, cancel := context.WithTimeout(context.Background(), MinTimeout*time.Millisecond)
+	// defer cancel()
 
-	ctx = metadata.NewOutgoingContext(ctx, metadata.New(md))
+	ctx := metadata.NewOutgoingContext(context.Background(), metadata.New(md))
 
 	result, err = nodeclient.ClientRequest(ctx, &rpc.ClientArguments{Data: cmd})
 
 	return
 }
 
-func (c *Client) Command(cmd string, args ...string) (r interface{}, err error) {
+func (c *Client) Command(cmd string, args ...string) (r string, err error) {
 
 	switch cmd {
 	case "ll":
-		return json.Marshal(c.Log)
+		d, err := json.Marshal(c.Log)
+		r = string(d)
+		return fmt.Sprintf("%d:%s", len(c.Log), r), err
 	case "lc":
-		return json.Marshal(c.NodesConfig)
+		d, err := json.Marshal(c.NodesConfig)
+		r = string(d)
+		return fmt.Sprintf("%d:%s", len(c.NodesConfig), r), err
+	case "id":
+		return fmt.Sprintf("Term %v ,ROLE: %v, ID: %v, LeaderID: %v", c.CurrentTerm, c.CurrentRole, c.ID, c.LeaderID), err
 	case CMD_JOIN:
 
 		if len(args) > 1 {
-			return c.ClientRequestCall([]byte(CMD_JOIN), args[1], nil)
+			c.CurrentTerm = 0
+			r, err := c.ClientRequestCall([]byte(CMD_JOIN), args[1], nil)
+			if err != nil {
+				return err.Error(), err
+			}
+			return []string{"失败", "OK"}[r.State], err
 		} else {
 			err = fmt.Errorf("提供一个地址参数")
 			return
 		}
 
-	}
+	default:
+		logrus.Info("default:", cmd)
 
-	return
+		r, err := c.ClientRequestCall([]byte(cmd), c.LeaderID, nil)
+		if err != nil {
+			return err.Error(), err
+		}
+		return []string{"失败", "OK"}[r.State], err
+
+	}
 
 }
 

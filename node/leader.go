@@ -18,13 +18,6 @@ type Leader = Node
 //raft/rpc_call:一旦成为领导人，立即发送日志
 func (l *Leader) AppendEntriesCall() {
 
-	//当配置不为空的时候，如果上届leader ID不存在于配置列表，那么就添加
-	//note:也就是不是第一个原始Leader时（原始Leader不是从follower转变的，所以leaderid一定是空，不能添加到配置列表中）
-	l.AddNodesConfig(&Config{ID: l.LeaderID, NextIndex: 1})
-	l.LeaderID = l.ID
-
-	//===========================
-
 	//等待迎接新节点加入
 
 	go l.receptionNewNodes()
@@ -49,6 +42,10 @@ func (l *Leader) AppendEntriesCall() {
 
 			//假设存在N
 			//这个N，从节点的matchIndex中找。（这个方法是本人自己设计，而非Raft定义，Raft中没有明确定义这个N的来源）
+			if config == nil { //规避配置还没有完全写入完毕的nil panic
+				continue
+			}
+
 			N := config.MatchIndex
 			count := 0
 
@@ -148,7 +145,7 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 			//如果收到的Term大于当前轮，成为Follower
 			if results.Term > l.CurrentTerm {
 				l.CurrentTerm = results.Term
-				l.Become(Role_Follower)
+				l.Become(Role_Follower, "心跳对象的轮比自己大")
 				return
 			}
 
@@ -173,8 +170,7 @@ func (l *Leader) receptionNewNodes() {
 	//如果有，发起链接和心跳
 	for id := range l.NewNodeChan {
 		newCfg := &Config{ID: id, NextIndex: 1}
-		//如果添加成功（1. 与现有配置没有重复，2. newCfg的ID不是 “” ，
-		//2的原因是：在原始节点成为Leader时，会添加一次上次LeaderID，但是原始节点没有上次LeaderID，会提交一个空ID，这是不行的，所以在条件中排出掉）
+		//如果添加成功与现有配置没有重复，
 		if l.AddNodesConfig(newCfg) {
 			go l.connectAndAppend(newCfg)
 		}

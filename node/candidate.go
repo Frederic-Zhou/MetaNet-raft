@@ -16,9 +16,9 @@ type Candidate = Node
 //raft/rpc_call: Start a vote
 func (c *Candidate) RequestVoteCall() bool {
 
-	c.CurrentTerm += 1               //当前任期自增
-	c.VotedCount = 1                 //先给自己记录一票
-	c.Timer.Reset(RandMillisecond()) //启动一个定时器
+	c.CurrentTerm += 1                         //当前任期自增
+	c.VotedCount = 1                           //先给自己记录一票
+	c.Timer = time.NewTimer(RandMillisecond()) //启动一个定时器
 
 	logrus.Infof("New term is %d \n", c.CurrentTerm)
 
@@ -43,6 +43,7 @@ func (c *Candidate) RequestVoteCall() bool {
 			//如果收到大多数服务器的选票，成为领导人
 			// logrus.Infof("votedCount %d/%d at %d \n", c.VotedCount, len(c.NodesConfig), c.CurrentTerm)
 			if c.VotedCount > uint(len(c.NodesConfig)/2) {
+				c.Timer.Stop()
 				return true
 			}
 		}
@@ -82,7 +83,7 @@ func (c *Candidate) connectAndVote(cfg *Config) {
 
 	if results.Term > c.CurrentTerm {
 		c.CurrentTerm = results.Term
-		c.Become(Role_Follower)
+		c.Become(Role_Follower, "投票人的轮数比自己还大")
 		return
 	}
 
