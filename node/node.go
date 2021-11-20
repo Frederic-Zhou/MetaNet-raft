@@ -15,7 +15,7 @@ import (
 func NewNode() (n *Node) {
 
 	n = &Node{}
-	// n.ID = "-"
+
 	n.NodesConfig = []*Config{}
 
 	//todo: 生成私钥
@@ -47,12 +47,12 @@ func (n *Node) NodeWork() {
 			//Timer返回，说明超时了，身份转变为Candidate
 			n.Become(Role_Candidate, "心跳超时，成为候选人")
 		case Role_Candidate:
-			logrus.Info("成为了候选人")
 			if n.RequestVoteCall() {
 				n.Become(Role_Leader, "选举获胜")
 			}
 		case Role_Leader:
 			// 一旦成为领导人，立即发送日志
+			n.LeaderID = n.ID
 			n.AppendEntriesCall()
 			//领导人退位的原因是收到了更高的Term
 			n.Become(Role_Follower, "结束发送数据")
@@ -156,6 +156,7 @@ func (n *Node) ClientRequest(ctx context.Context, in *rpc.ClientArguments) (resu
 		logrus.Infof("id %v, selfid %v, fromid %v", n.ID, selfid, fromid)
 		if n.ID == "" { //如果是自己的ID是空，说明是第一次得到自己的ID，同样写入到日志中
 			n.ID = selfid
+			n.LeaderID = n.ID
 
 			n.Log = append(n.Log, &rpc.Entry{
 				Term: n.CurrentTerm,

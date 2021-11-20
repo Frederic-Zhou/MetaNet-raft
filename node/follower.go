@@ -37,8 +37,6 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 
 	// 所有服务器实现，如果接收到的RPC的 Term高于自己，那么更新自己的Term，并且切换为Follower
 	if in.Term > f.CurrentTerm {
-		// 动态节点，将发心跳过来的IP 作为 LeaderID, 请求目标IP就是自己的ID
-		f.LeaderID, f.ID = network.GetGrpcClientIP(ctx)
 
 		//如果接收到的RPC请求或响应中，任期号大于当前任期号，则当前任期号改为接收到的任期号
 		f.CurrentTerm = in.Term
@@ -85,6 +83,8 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 	if len(in.Entries) > 0 {
 		logrus.Info("new log is:", in.Entries)
 	}
+	// 动态节点，将发心跳过来的IP 作为 LeaderID, 请求目标IP就是自己的ID
+	f.LeaderID, f.ID = network.GetGrpcClientIP(ctx)
 
 	//同步Leader的CommitIndex
 	//note: 有可能出现本节点是较慢的节点，Leader已经提交了较高的Index，但是本节点未必获得了领导的最高提交Index的日志
