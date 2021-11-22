@@ -32,6 +32,9 @@ func (l *Leader) AppendEntriesCall() {
 	}
 	// 检查全部Node的matchIndex ，如果大多数相同，那么,认为提交的数据成立
 	for {
+		//无限循环一定要加一个时间，避免占用系统处理资源。
+		time.Sleep(MinTimeout / 10 * time.Millisecond)
+
 		if l.CurrentRole != Role_Leader {
 			//如果不再是Learder 退出
 			return
@@ -91,7 +94,7 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 	nodeclient := rpc.NewNodeClient(conn)
 	lastErr := fmt.Errorf("")
 
-	//间隔50毫秒，不断的给Follower发送条目或者心跳
+	//间隔1/3个最小随机时间，不断的给Follower发送条目或者心跳
 	for {
 		//*****绝对不能发给自己
 		if cfg.ID == l.ID {

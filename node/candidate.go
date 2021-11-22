@@ -46,6 +46,9 @@ func (c *Candidate) RequestVoteCall() bool {
 				c.Timer.Stop()
 				return true
 			}
+
+			time.Sleep(MinTimeout / 10 * time.Millisecond)
+
 		}
 
 	}

@@ -78,6 +78,8 @@ func (n *Node) ApplyStateMachine() {
 				n.LastApplied--
 			}
 		}
+
+		time.Sleep(MinTimeout / 10 * time.Millisecond)
 	}
 
 }
