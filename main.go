@@ -5,7 +5,6 @@ import (
 	"metanet/node"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -13,11 +12,11 @@ import (
 //
 func main() {
 	n := node.NewNode()
-	go n.RpcServerStart()
-	time.Sleep(1 * time.Second)
 	n.Become(node.Role_Follower, "启动")
 	go n.ApplyStateMachine()
 	go n.NodeWork()
+	go n.RpcServerStart()
+
 	simpalClient(n)
 }
 func simpalClient(n *node.Node) {

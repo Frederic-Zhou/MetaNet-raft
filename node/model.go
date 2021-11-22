@@ -18,7 +18,8 @@ const (
 	MinTimeout = 150 * 10
 	MaxTimeout = 300 * 10
 
-	CMD_JOIN = "join"
+	CMD_JOIN  = "join"
+	CMD_ALIVE = "alive"
 )
 
 var PORT = 8800
@@ -36,6 +37,8 @@ type Config struct {
 	NextIndex uint64
 	//已复制的最大Log索引
 	MatchIndex uint64
+	//是否链接中
+	Alive bool
 }
 
 // type Entry struct {

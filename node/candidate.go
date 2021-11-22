@@ -22,14 +22,16 @@ func (c *Candidate) RequestVoteCall() bool {
 
 	logrus.Infof("New term is %d \n", c.CurrentTerm)
 
-	for i, config := range c.NodesConfig {
+	alives := aliveNodes(c.NodesConfig)
+
+	for _, config := range alives {
 		//排除自己
 		if config.ID == c.ID {
 			continue
 		}
 
 		//初始化所有节点的 nextIndex 为自己的Log最大index+1
-		c.NodesConfig[i].NextIndex = uint64(len(c.Log))
+		config.NextIndex = uint64(len(c.Log))
 		//向每一个节点发起链接，并 逐个推送条目
 		go c.connectAndVote(config)
 	}
@@ -42,7 +44,7 @@ func (c *Candidate) RequestVoteCall() bool {
 			// case <-time.After(10 * time.Millisecond):
 			//如果收到大多数服务器的选票，成为领导人
 			// logrus.Infof("votedCount %d/%d at %d \n", c.VotedCount, len(c.NodesConfig), c.CurrentTerm)
-			if c.VotedCount > uint(len(c.NodesConfig)/2) {
+			if c.VotedCount > uint(len(alives)/2) {
 				c.Timer.Stop()
 				return true
 			}

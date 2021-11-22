@@ -24,7 +24,6 @@ func (l *Leader) AppendEntriesCall() {
 
 	// 读取出所有的节点配置地址
 	for _, cfg := range l.NodesConfig {
-
 		//初始化所有节点的 nextIndex 为自己的Log最大index+1
 		cfg.NextIndex = uint64(len(l.Log))
 		//向每一个节点发起链接，并 逐个推送条目
@@ -40,15 +39,17 @@ func (l *Leader) AppendEntriesCall() {
 			return
 		}
 
-		// logrus.Infof("all nodes count is %d", len(l.MatchIndex))
-		for _, config := range l.NodesConfig {
+		alives := aliveNodes(l.NodesConfig)
 
-			//假设存在N
-			//这个N，从节点的matchIndex中找。（这个方法是本人自己设计，而非Raft定义，Raft中没有明确定义这个N的来源）
-			if config == nil { //规避配置还没有完全写入完毕的nil panic
+		// logrus.Infof("all nodes count is %d", len(l.MatchIndex))
+		for _, config := range alives {
+			//规避配置还没有完全写入完毕的nil panic
+			if config == nil {
 				continue
 			}
 
+			//假设存在N
+			//这个N，从节点的matchIndex中找。（这个方法是本人自己设计，而非Raft定义，Raft中没有明确定义这个N的来源）
 			N := config.MatchIndex
 			count := 0
 
@@ -56,13 +57,13 @@ func (l *Leader) AppendEntriesCall() {
 			//则令 commitIndex=N
 			if N > l.CommitIndex && l.Log[N].Term == l.CurrentTerm {
 
-				for _, cfg := range l.NodesConfig {
+				for _, cfg := range alives {
 					if cfg.MatchIndex >= N {
 						count++
 					}
 				}
 
-				if count >= len(l.NodesConfig)/2 {
+				if count >= len(alives)/2 {
 					l.CommitIndex = N
 				}
 
@@ -132,6 +133,8 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 		defer cancel()
 		results, err := nodeclient.AppendEntries(ctx, eArguments)
 		if err != nil {
+			l.nodeAliveStateChangeLog(cfg, false)
+
 			//当新的错误与上一次错误不同时才打印，否则不打印
 			if lastErr.Error() != err.Error() {
 				logrus.Errorf("AppendEntries err:%v %v\n", cfg.ID, err)
@@ -139,6 +142,7 @@ func (l *Leader) connectAndAppend(cfg *Config) {
 			lastErr = err
 
 		} else {
+			l.nodeAliveStateChangeLog(cfg, true)
 
 			if len(entries) > 0 {
 				logrus.Infof("to %v, prevlogIndex: %v, prelogTerm: %v ,commitIndex %v,lastAppliedIndex %v, entries: %v,Append: term: %v,success: %v",
@@ -172,11 +176,34 @@ func (l *Leader) receptionNewNodes() {
 	//检查有没有新增的节点配置
 	//如果有，发起链接和心跳
 	for id := range l.NewNodeChan {
-		newCfg := &Config{ID: id, NextIndex: 1}
+		newCfg := &Config{ID: id, NextIndex: 1, Alive: true}
 		//如果添加成功与现有配置没有重复，
 		if l.AddNodesConfig(newCfg) {
 			go l.connectAndAppend(newCfg)
 		}
 
+	}
+}
+
+func aliveNodes(configs []*Config) (alives []*Config) {
+
+	for _, cfg := range configs {
+		if cfg.Alive {
+			alives = append(alives, cfg)
+		}
+
+	}
+
+	return
+
+}
+
+//根据grpc链接状态，设置节点的在线状态
+//如果新状态和节点状态不同，说明状态发生改变，写入日志，同步到其他节点中去
+func (l *Leader) nodeAliveStateChangeLog(cfg *Config, newState bool) {
+	if cfg.Alive != newState {
+		cfg.Alive = newState
+		l.Log = append(l.Log, &Entry{Term: l.CurrentTerm,
+			Data: []byte(fmt.Sprintf("%s%s>%t", CMD_ALIVE, cfg.ID, cfg.Alive))})
 	}
 }
