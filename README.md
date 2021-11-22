@@ -11,6 +11,5 @@ rpc 生成
 ## todo
 
 - [ ] 生成私钥、加密和签名传输
-- [ ] 同步NodesConfig配置
-- [ ] 应用状态机
-- [ ] 优化Join的处理方法，以及孤立Leader对网络环境再次探测
+- [x] 同步NodesConfig配置
+- [x] 应用状态机

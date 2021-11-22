@@ -11,6 +11,7 @@ import (
 
 //
 func main() {
+
 	n := node.NewNode()
 	n.Become(node.Role_Follower, "启动")
 	go n.ApplyStateMachine()
@@ -23,6 +24,9 @@ func simpalClient(n *node.Node) {
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		input := scanner.Text()
+		if input == "exit" {
+			break
+		}
 
 		inputArr := strings.Split(input, " ")
 		result, err := n.Command(inputArr[0], inputArr...)
