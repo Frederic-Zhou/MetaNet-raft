@@ -17,7 +17,7 @@ type Leader = Node
 
 //raft/rpc_call:一旦成为领导人，立即发送日志
 func (l *Leader) AppendEntriesCall() {
-
+	l.LeaderID = l.ID
 	//等待迎接新节点加入
 
 	go l.receptionNewNodes()
@@ -42,15 +42,15 @@ func (l *Leader) AppendEntriesCall() {
 		alives := aliveNodes(l.NodesConfig)
 
 		// logrus.Infof("all nodes count is %d", len(l.MatchIndex))
-		for _, config := range alives {
+		for _, cfg := range alives {
 			//规避配置还没有完全写入完毕的nil panic
-			if config == nil {
+			if cfg == nil {
 				continue
 			}
 
 			//假设存在N
 			//这个N，从节点的matchIndex中找。（这个方法是本人自己设计，而非Raft定义，Raft中没有明确定义这个N的来源）
-			N := config.MatchIndex
+			N := cfg.MatchIndex
 			count := 0
 
 			//满足N > commitIndex , 使得 大多数 matchIndex[i]>=N 以及 log[N].term == currentTerm
@@ -181,13 +181,12 @@ func (l *Leader) receptionNewNodes() {
 		if l.AddNodesConfig(newCfg) {
 			go l.connectAndAppend(newCfg)
 		}
-
 	}
 }
 
-func aliveNodes(configs []*Config) (alives []*Config) {
+func aliveNodes(cfgs []*Config) (alives []*Config) {
 
-	for _, cfg := range configs {
+	for _, cfg := range cfgs {
 		if cfg.Alive {
 			alives = append(alives, cfg)
 		}

@@ -52,7 +52,6 @@ func (n *Node) NodeWork() {
 			}
 		case Role_Leader:
 			// 一旦成为领导人，立即发送日志
-			n.LeaderID = n.ID
 			n.AppendEntriesCall()
 			//领导人退位的原因是收到了更高的Term
 			n.Become(Role_Follower, "结束发送数据")

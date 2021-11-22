@@ -24,16 +24,16 @@ func (c *Candidate) RequestVoteCall() bool {
 
 	alives := aliveNodes(c.NodesConfig)
 
-	for _, config := range alives {
+	for _, cfg := range alives {
 		//排除自己
-		if config.ID == c.ID {
+		if cfg.ID == c.ID {
 			continue
 		}
 
 		//初始化所有节点的 nextIndex 为自己的Log最大index+1
-		config.NextIndex = uint64(len(c.Log))
+		cfg.NextIndex = uint64(len(c.Log))
 		//向每一个节点发起链接，并 逐个推送条目
-		go c.connectAndVote(config)
+		go c.connectAndVote(cfg)
 	}
 
 	for {
@@ -94,7 +94,7 @@ func (c *Candidate) connectAndVote(cfg *Config) {
 
 	logrus.Info("vote return:", results)
 	if results.VoteGranted {
-		c.VotedCount += 1
+		c.VotedCount++
 	}
 
 }
