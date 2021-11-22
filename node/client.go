@@ -55,7 +55,10 @@ func (c *Client) Command(cmd string, args ...string) (r string, err error) {
 	case CMD_JOIN:
 
 		if len(args) > 1 {
+			//join 将自己的term降低到0，以保证收到心跳时，能够成功转换为Follower
 			c.CurrentTerm = 0
+			//将自己未commit的日志清理掉
+			c.Log = c.Log[:c.CommitIndex+1]
 			r, err := c.ClientRequestCall([]byte(CMD_JOIN), args[1], nil)
 			if err != nil {
 				return err.Error(), err
