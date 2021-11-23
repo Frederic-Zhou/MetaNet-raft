@@ -53,7 +53,7 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 	// logrus.Warning("ROLE:", f.CurrentRole)
 
 	//如果领导人的任期小于接收者的当前任期（接受者为Follower和Candidate）
-	//note: 是否在这里判断的时候排出掉自己是Leader的情况????
+	//note: 是否在这里判断的时候排出掉自己是Leader的情况???? :针对这个问题，在Leader发送时做了判断，一定不能给自己发。
 	if in.Term < f.CurrentTerm {
 		result.Success = false
 		return
@@ -72,8 +72,10 @@ func (f *Follower) AppendEntries(ctx context.Context, in *rpc.EntriesArguments) 
 		return
 	}
 
-	//如果一个已经存在的条目和新条目冲突（索引相同，任期不同）删除该条目即之后的条目
-	if lastIndex >= in.PrevLogIndex+1 && f.Log[in.PrevLogIndex].Term != in.PrevLogTerm {
+	//如果一个已经存在的条目和新条目（译者注：即刚刚接收到的日志条目）发生了冲突（因为索引相同，任期不同），
+	//那么就删除这个已经存在的条目以及它之后的所有条目 （5.3 节）
+	//note:这里的判断似乎和论文上有差异，还需要修正????
+	if lastIndex >= in.PrevLogIndex+1 && f.Log[in.PrevLogIndex+1].Term != in.Entries[0].Term {
 		f.Log = f.Log[:in.PrevLogIndex+1]
 	}
 
