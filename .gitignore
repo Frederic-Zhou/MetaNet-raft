@@ -13,3 +13,5 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+default.etcd/member/snap/db
+default.etcd/member/wal/0000000000000000-0000000000000000.wal
